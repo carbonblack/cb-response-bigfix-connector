@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BES xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="BES.xsd">
+<Fixlet>
+    <Title>Banned File - md5={0}</Title>
+    <Description><![CDATA[<P>This Fixlet has identified the existence of a file banned by Carbon Black.</P>
+        <UL>
+        <LI>Name:&nbsp;&lt;multiple&gt;
+        <LI>Hash (sha1): d9aed15af649ee5db1c5b7a08aee5d5cc45fcc9f
+        <LI>Description: &lt;description/comments&gt;</LI></UL>]]></Description>
+    <Relevance>
+        {1}
+    </Relevance>
+    <Category>Banned File</Category>
+    <Source>Carbon Black</Source>
+    <SourceID></SourceID>
+    <SourceReleaseDate>{2}</SourceReleaseDate>
+    <SourceSeverity>Critical</SourceSeverity>
+    <CVENames></CVENames>
+    <SANSID></SANSID>
+    <MIMEField>
+        <Name>x-fixlet-modification-time</Name>
+        <Value>{3}</Value>
+    </MIMEField>
+    <Domain>BESC</Domain>
+    <DefaultAction ID="Action1">
+        <Description>
+            <PreLink>Click </PreLink>
+            <Link>here</Link>
+            <PostLink> to delete the banned file across all hosts.</PostLink>
+        </Description>
+        <ActionScript MIMEType="application/x-Fixlet-Windows-Shell">
+            {4}
+        </ActionScript>
+    </DefaultAction>
+    <Action ID="Action2">
+        <Description>
+            <PreLink>Click </PreLink>
+            <Link>here</Link>
+            <PostLink> to quarantine the banned file. (Not Yet Implemented)</PostLink>
+        </Description>
+        <ActionScript MIMEType="application/x-Fixlet-Windows-Shell">
+            // Quarantine actionscript here
+        </ActionScript>
+    </Action>
+</Fixlet>
+</BES>
