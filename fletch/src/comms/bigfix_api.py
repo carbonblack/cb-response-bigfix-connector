@@ -90,6 +90,8 @@ class BigFixApi:
                                                 verify=False).text
 
         # parse the XML result, load the value as json, then do what we need
+        print(self._auth)
+        print(self._dashboard_data_xml)
         xml_result = Et.fromstring(self._dashboard_data_xml)
         # print(req_result.text)
         data = json.loads(xml_result.find('DashboardData').find('Value').text)

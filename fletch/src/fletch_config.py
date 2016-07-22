@@ -84,9 +84,17 @@ class Config(object):
         self.risk_phase2_nvd = 5
         self.risk_phase2_nvd_and_iocs = 10
 
+        # Banned file feed name
+        self.banned_file_feed = 'cbbanning'
+
         # load in the items from the config file
         for x in load_file_section('integration-core'):
             self.__dict__[x[0]] = x[1]
+
+        # make the on/off switches actually booleans
+        self.send_vulnerable_app_info = bool(self.send_vulnerable_app_info)
+        self.send_implicated_app_info = bool(self.send_implicated_app_info)
+        self.send_banned_file_info = bool(self.send_banned_file_info)
 
         # a list of tuples for the feeds we should look for and the
         # minimum score that must be achieve before we consider it a

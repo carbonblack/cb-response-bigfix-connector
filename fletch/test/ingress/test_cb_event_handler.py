@@ -14,7 +14,7 @@ class TestCbEventHandler(TestCase):
 
         CbEventHandler(test_config, sb)
         incoming = sb.channel(
-            test_config.CbEventListener.sb_incoming_cb_events)
+            test_config.cb_event_listener.sb_incoming_cb_events)
 
         object_pass_back = {}
 

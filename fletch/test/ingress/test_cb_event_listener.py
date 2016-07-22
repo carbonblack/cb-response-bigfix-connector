@@ -32,7 +32,7 @@ class TestCbEventListener(TestCase):
         def callback(network_json):
             object_pass_back['result'] = network_json
 
-        sb.channel(test_config.CbEventListener.sb_incoming_cb_events)\
+        sb.channel(test_config.cb_event_listener.sb_incoming_cb_events)\
             .register_callback(callback)
 
         # open up the JSON file and ship it over the network
@@ -42,7 +42,7 @@ class TestCbEventListener(TestCase):
             try:
                 s.connect((
                     'localhost',
-                    test_config.CbEventListener.listen_port
+                    test_config.cb_event_listener.listen_port
                 ))
                 s.send(json.dumps(original_json))
             finally:
@@ -79,17 +79,18 @@ class TestCbEventListener(TestCase):
         def callback(network_json):
             object_pass_back['result'] = network_json
 
-        sb.channel(test_config.CbEventListener.sb_incoming_cb_events)\
+        sb.channel(test_config.cb_event_listener.sb_incoming_cb_events)\
             .register_callback(callback)
 
         # open up the JSON file and ship it over the network
-        with open("ingress/data/reader_sl_feed_hit_with_nvd_vuln_parent.json") as json_file:
+        j_path = "ingress/data/reader_sl_feed_hit_with_nvd_vuln_parent.json"
+        with open(j_path) as json_file:
             original_json = json.load(json_file)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
                 s.connect((
                     'localhost',
-                    test_config.CbEventListener.listen_port
+                    test_config.cb_event_listener.listen_port
                 ))
                 s.send(json.dumps(original_json))
             finally:
