@@ -69,6 +69,9 @@ class IbmBigfix(object):
         for x in load_file_section('ibm-bigfix'):
             self.__dict__[x[0]] = x[1]
 
+        # correct type to an integer
+        self.packaging_interval = int(self.packaging_interval)
+
 
 class Config(object):
     """

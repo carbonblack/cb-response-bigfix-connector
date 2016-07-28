@@ -2,11 +2,11 @@ from unittest import TestCase, main as unittest_main
 from time import sleep
 import json
 
-from src.egress.bigfix import EgressBigFix
-from src.data.switchboard import Switchboard
-from src.fletch_config import Config
-from src.data.events import FeedHitEvent
-from src.comms.bigfix_api import BigFixApi
+from fletch.egress.bigfix import EgressBigFix
+from fletch.data.switchboard import Switchboard
+from fletch.fletch_config import Config
+from fletch.data.events import FeedHitEvent
+from fletch.comms.bigfix_api import BigFixApi
 
 
 class TestEgressBigFix(TestCase):

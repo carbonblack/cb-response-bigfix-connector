@@ -1,4 +1,4 @@
-from src.comms.bigfix_api import BigFixApi
+from fletch.comms.bigfix_api import BigFixApi
 
 
 class EgressBigFix(object):

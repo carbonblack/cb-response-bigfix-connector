@@ -2,11 +2,11 @@ from time import sleep
 from cbapi.response.models import Watchlist
 from cbapi import CbEnterpriseResponseAPI
 
-from src.data.switchboard import Switchboard
-from src.fletch_config import Config
-from src.ingress.cbforwarder.cb_event_listener import CbEventListener
-from src.ingress.cbforwarder.cb_event_handler import CbEventHandler
-from src.egress.bigfix import EgressBigFix
+from fletch.data.switchboard import Switchboard
+from fletch.fletch_config import Config
+from fletch.ingress.cbforwarder.cb_event_listener import CbEventListener
+from fletch.ingress.cbforwarder.cb_event_handler import CbEventHandler
+from fletch.egress.bigfix import EgressBigFix
 
 
 class CbBigFixIntegrator(object):

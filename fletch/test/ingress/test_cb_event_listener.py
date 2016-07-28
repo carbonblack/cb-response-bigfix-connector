@@ -3,9 +3,9 @@ from time import sleep
 import json
 import socket
 
-from src.data.switchboard import Switchboard
-from src.fletch_config import Config
-from src.ingress.cbforwarder.cb_event_listener import CbEventListener
+from fletch.data.switchboard import Switchboard
+from fletch.fletch_config import Config
+from fletch.ingress.cbforwarder.cb_event_listener import CbEventListener
 
 
 class TestCbEventListener(TestCase):

@@ -127,9 +127,14 @@ class CbEventListener(object):
 
                 json_object = json_loads("".join(json_string))
 
+                accepted_message_types = [
+                    "feed.storage.hit.process",
+                    "watchlist.hit.process"
+                ]
+
                 # assume keys are present, fetch what we need
                 # (errors will be caught anyhow by the try-except wrapper)
-                if json_object["type"] == "feed.storage.hit.process":
+                if json_object["type"] in accepted_message_types:
                     self._incoming_chan.send(json_object)
 
                 else:

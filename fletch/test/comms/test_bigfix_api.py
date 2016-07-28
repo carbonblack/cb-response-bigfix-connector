@@ -2,8 +2,8 @@ from unittest import TestCase, main as unittest_main
 from time import sleep
 import json
 
-from src.fletch_config import Config
-from src.comms.bigfix_api import BigFixApi
+from fletch.fletch_config import Config
+from fletch.comms.bigfix_api import BigFixApi
 
 
 class TestEgressBigFix(TestCase):
