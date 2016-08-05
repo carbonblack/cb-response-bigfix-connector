@@ -15,15 +15,24 @@ class Loggy(object):
     INFO = logging.INFO
     DEBUG = logging.DEBUG
 
-    def __init__(self,
-                 logger_name,
-                 logger_format="%(asctime)s %(levelname)s: %(message)s",
-                 logger_default_level=INFO):
+    AC_STDOUT_DEBUG = "STDOUT_DEBUG"
 
-        self._logger = logging.getLogger(logger_name)
+    def __init__(self,
+                 logger_format=None,
+                 log_level=INFO,
+                 auto_config_flags=list()):
+
+        # logger format
+        if logger_format is None:
+            logger_format = "%(asctime)s %(levelname)s - " \
+                            "%(filename)s:%(lineno)s - %(funcName)s : " \
+                            "%(message)s"
+
+        # grab and config the root logger
+        self._logger = logging.getLogger()
         self._logger_format = logging.Formatter(logger_format)
-        self._logger.setLevel(logger_default_level)
-        self._default_level = logger_default_level
+        self._logger.setLevel(log_level)
+        self._default_level = log_level
 
         # setup definitions for later.. makes pycharm happy about
         # strict PEP requirements
@@ -31,8 +40,15 @@ class Loggy(object):
         self._logger_to_stdout = None
         self._logger_to_file = None
 
-    def logger(self):
-        return self._logger
+        # for ease of use, we have some quick configs that can be used
+        if auto_config_flags:
+            if Loggy.AC_STDOUT_DEBUG in auto_config_flags:
+                self.setup_log_to_stdout(Loggy.DEBUG)
+
+        # Output an initialized banner
+        self._logger.info("---------------------- "
+                          "LOGGER Started "
+                          "---------------------- ")
 
     def setup_log_to_stderr(self, log_level=None):
         if log_level is None:

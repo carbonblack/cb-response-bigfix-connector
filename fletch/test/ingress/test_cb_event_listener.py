@@ -2,13 +2,22 @@ from unittest import TestCase, main as unittest_main
 from time import sleep
 import json
 import socket
+import logging
 
-from fletch.data.switchboard import Switchboard
-from fletch.fletch_config import Config
-from fletch.ingress.cbforwarder.cb_event_listener import CbEventListener
+from src.data.switchboard import Switchboard
+from src.fletch_config import Config
+from src.ingress.cbforwarder.cb_event_listener import CbEventListener
+from src.utils.loggy import Loggy
 
 
 class TestCbEventListener(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        Loggy(log_level=Loggy.DEBUG,
+              auto_config_flags=[Loggy.AC_STDOUT_DEBUG])
+        cls._logger = logging.getLogger(__name__)
+        cls._logger.info("------- TestCbEventListener -------")
 
     def test_inbound_data_processing(self):
         """"
@@ -19,9 +28,9 @@ class TestCbEventListener(TestCase):
 
         sb = Switchboard()
         test_config = Config()
-        print("Setup starting for EventListener")
+        self._logger.debug("Setup starting for EventListener")
         listener = CbEventListener(test_config, sb)
-        print("Setup Complete")
+        self._logger.debug("Setup Complete")
 
         # hack to bring data within the callback function
         # back into this scope
@@ -36,9 +45,11 @@ class TestCbEventListener(TestCase):
             .register_callback(callback)
 
         # open up the JSON file and ship it over the network
-        with open("ingress/data/adobe_reader_9_3_4_nvd_hit.json") as json_file:
+        test_nvd_hit = "test/ingress/data/adobe_reader_9_3_4_nvd_hit.json"
+        with open(test_nvd_hit) as json_file:
             original_json = json.load(json_file)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sleep(.5)
             try:
                 s.connect((
                     'localhost',
@@ -64,11 +75,19 @@ class TestCbEventListener(TestCase):
         confirm that it was put into the handler channel without loss of data.
         """
 
+        # sleep for a moment because this is the second test using the network
+        # we'll allow the kernel to release the resources
+        sleep(1)
+
+        # TODO adapt this to be based upon watchlist hits instead of feeds
+
         sb = Switchboard()
+        self.addCleanup((lambda board: board.shutdown()), sb)
         test_config = Config()
-        print("Setup starting for EventListener")
+        self._logger.debug("Setup starting for EventListener")
         listener = CbEventListener(test_config, sb)
-        print("Setup Complete")
+        self.addCleanup((lambda a_listener: a_listener.shutdown()), listener)
+        self._logger.debug("Setup Complete")
 
         # hack to bring data within the callback function
         # back into this scope
@@ -83,11 +102,13 @@ class TestCbEventListener(TestCase):
             .register_callback(callback)
 
         # open up the JSON file and ship it over the network
-        j_path = "ingress/data/reader_sl_feed_hit_with_nvd_vuln_parent.json"
+        j_path = "test/ingress/" \
+                 "data/reader_sl_feed_hit_with_nvd_vuln_parent.json"
         with open(j_path) as json_file:
             original_json = json.load(json_file)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
+                sleep(.5)
                 s.connect((
                     'localhost',
                     test_config.cb_event_listener.listen_port
@@ -101,8 +122,6 @@ class TestCbEventListener(TestCase):
 
         # now verify the data was parsed correctly
         self.assertTrue(original_json, object_pass_back)
-        listener.shutdown()
-        sb.shutdown()
 
 if __name__ == '__main__':
     unittest_main()

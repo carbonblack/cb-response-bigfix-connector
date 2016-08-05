@@ -10,36 +10,44 @@ class Host(object):
     """
     data about the hosting machine
     """
-    name = ""
-    bigfix_id = -1
-    cb_sensor_id = -1
+
+    OS_TYPE_WINDOWS = 0
+
+    def __init__(self):
+        self.name = ""
+        self.bigfix_id = -1
+        self.cb_sensor_id = -1
+        self.os_type = None
 
 
 class Process(object):
     """
     data about the process involved in the event
     """
-    md5 = ""
-    guid = ""
-    file_path = ""
-    timestamp = ""
-    name = ""
-    cb_analyze_link = ""
+    def __init__(self):
+        self.md5 = ""
+        self.guid = ""
+        self.file_path = ""
+        self.timestamp = ""
+        self.name = ""
+        self.cb_analyze_link = ""
 
 
 class ThreatIntel(object):
     """
     data about the threat info
     """
-    hits = list()   # list of ThreatIntelHits
-    overall_score = -1
+    def __init__(self):
+        self.hits = list()   # list of ThreatIntelHits
+        self.overall_score = -1
 
 
 class ThreatIntelHit(object):
-    feed_name = ""
-    score = -1
-    alliance_link = ""
-    cve = ""
+    def __init__(self):
+        self.feed_name = ""
+        self.score = -1
+        self.alliance_link = ""
+        self.cve = ""
 
 
 ##############################################################################
@@ -93,5 +101,5 @@ class BannedFileEvent(Event):
     """
 
     def __init__(self):
-        self.banned_process = Process()
+        self.process = Process()
         super(BannedFileEvent, self).__init__()

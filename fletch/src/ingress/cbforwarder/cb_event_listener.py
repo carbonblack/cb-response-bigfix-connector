@@ -42,7 +42,7 @@ class CbEventListener(object):
         self._listen_port = fletch_config.cb_event_listener.listen_port
         self._switchboard = switchboard
         self._shutdown = False
-        self._logger = logging
+        self.logger = logging.getLogger(__name__)
 
         # create our channels in the switchboard
         self._incoming_chan = self._switchboard.channel(
@@ -107,7 +107,7 @@ class CbEventListener(object):
         client_socket.settimeout(1)
 
         connection_alive = True
-        self._logger.info("Opening Connection With %s", address)
+        self.logger.info("Opening Connection With %s", address)
 
         # this is a hack way to read data from the socket and
         # turn it into a JSON object without over-reading data.
@@ -120,29 +120,33 @@ class CbEventListener(object):
                     char = client_socket.recv(1)
                     if not char:
                         connection_alive = False
-                        self._logger.info("Closing Connection With %s",
-                                          address)
+                        self.logger.info("Closing Connection With %s",
+                                         address)
                     else:
                         json_string.append(char)
 
                 json_object = json_loads("".join(json_string))
 
+                # TODO test case of sending watchlist hit through here
                 accepted_message_types = [
                     "feed.storage.hit.process",
-                    "watchlist.hit.process"
+                    "watchlist.storage.hit.process"
                 ]
 
                 # assume keys are present, fetch what we need
                 # (errors will be caught anyhow by the try-except wrapper)
                 if json_object["type"] in accepted_message_types:
+                    self.logger.debug("Received message of type: {0}".format(
+                        json_object['type']
+                    ))
                     self._incoming_chan.send(json_object)
 
                 else:
-                    self._logger.info("Skipping unrelated object: {0}".format(
+                    self.logger.debug("Skipping unrelated object: {0}".format(
                         json_object["type"]))
 
             except timeout:
                 pass
 
             except Exception as e:
-                print(self._logger.exception(e))
+                self.logger.exception(e)

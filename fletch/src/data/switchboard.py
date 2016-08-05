@@ -1,8 +1,6 @@
 from threading import Thread, RLock
 from Queue import Queue, Empty as QEmpty
-from logging import info as log_info
-from logging import warn as log_warn
-from logging import exception as log_exception
+import logging
 
 
 class CallBackData(object):
@@ -32,9 +30,7 @@ class Channel(object):
 
         # no manager lock required
         self._queue = Queue()
-        self._log_info = log_info
-        self._log_warn = log_warn
-        self._log_exception = log_exception
+        self.logger = logging.getLogger(__name__)
 
         # kick out our transmit_message thread.
         Thread(target=self._transmit_message,
@@ -70,7 +66,7 @@ class Channel(object):
                                kwargs=callback_data.kwargs,
                                ).start()
                 except Exception as e:
-                    self._log_exception(e)
+                    self.logger.exception(e)
                 self._lock.release()
                 self._queue.task_done()
 
@@ -107,6 +103,8 @@ class Channel(object):
         arguments that the sender wishes. This will be passed along
         as arguments to the callback function.
         """
+        self.logger.debug("Channel {0} received message {1}".format(
+            self._name, (args, kwargs)))
         self._queue.put(CallBackData(args, kwargs))
 
     def register_callback(self, callback):
@@ -118,6 +116,8 @@ class Channel(object):
         self._lock.acquire()
         target_id = self._get_unique_subscription_id()
         self._callbacks[target_id] = callback
+        self.logger.debug("Registered function {0} for callback on"
+                           "channel {1}".format(callback, self._name))
         self._lock.release()
         return target_id
 

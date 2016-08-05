@@ -1,12 +1,14 @@
 from time import sleep
+import logging
 from cbapi.response.models import Watchlist
 from cbapi import CbEnterpriseResponseAPI
 
-from fletch.data.switchboard import Switchboard
-from fletch.fletch_config import Config
-from fletch.ingress.cbforwarder.cb_event_listener import CbEventListener
-from fletch.ingress.cbforwarder.cb_event_handler import CbEventHandler
-from fletch.egress.bigfix import EgressBigFix
+from data.switchboard import Switchboard
+from fletch_config import Config
+from ingress.cbforwarder.cb_event_listener import CbEventListener
+from ingress.cbforwarder.cb_event_handler import CbEventHandler
+from egress.bigfix import EgressBigFix
+from utils.loggy import Loggy
 
 
 class CbBigFixIntegrator(object):
@@ -20,6 +22,21 @@ class CbBigFixIntegrator(object):
         # load in all the configuration options
         self._config = Config()
 
+        # setup logging
+        # TODO respect the user configuration of log level
+        self.loggy = Loggy(log_level=Loggy.DEBUG,
+                           auto_config_flags=[Loggy.AC_STDOUT_DEBUG])
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug('Powering Up...')
+
+        # use the fake bigfix server:
+        if False:
+            import tools.fake_bigfix_server as bigfix_server
+            from threading import Thread
+            self._config.ibm_bigfix.url = 'localhost:5000'
+            self._config.ibm_bigfix.protocol = 'http'
+            Thread(target=bigfix_server.app.run).start()
+
         # connect to the Carbon Black response server
         # and ensure the watchlists we need are in place
         cb = CbEnterpriseResponseAPI(
@@ -29,7 +46,9 @@ class CbBigFixIntegrator(object):
         )
         for watchlist in self._config.integration_implication_watchlists:
             if watchlist not in [w.name for w in cb.select(Watchlist)]:
-                print("Can't find watchlist {0}, exiting.".format(watchlist))
+                # TODO print with logger
+                Loggy.CRITICAL("Can't find watchlist {0}, exiting.".format(
+                    watchlist))
                 exit(1)
 
         # establish our services
@@ -37,6 +56,7 @@ class CbBigFixIntegrator(object):
         self._cb_listener = CbEventListener(self._config, self._sb)
         self._cb_handler = CbEventHandler(self._config, self._sb)
         self._bf_egress = EgressBigFix(self._config, self._sb)
+        self.logger.debug("All Services Up")
 
         try:
             while True:

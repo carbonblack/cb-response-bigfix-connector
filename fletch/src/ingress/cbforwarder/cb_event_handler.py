@@ -1,10 +1,10 @@
-import logging
-
-import fletch.data.events as events
-from fletch.comms.bigfix_api import BigFixApi
+from src.comms.bigfix_api import BigFixApi
+from requests.exceptions import HTTPError
 from cbapi import CbApi
 from cbapi import CbEnterpriseResponseAPI
 from cbapi.response.models import ThreatReport
+import src.data.events as events
+import logging
 
 
 class CbEventHandler(object):
@@ -13,25 +13,26 @@ class CbEventHandler(object):
         self._switchboard = switchboard
         self._core_event_chan = self._switchboard.channel(
             fletch_config.sb_feed_hit_events)
+        self._banned_file_chan = self._switchboard.channel(
+            fletch_config.sb_banned_file_events)
+
         self._cb_url = fletch_config.cb_comms.url
 
         self._bigfix_api = BigFixApi(fletch_config)
-        self._logger = logging
+        self.logger = logging.getLogger(__name__)
 
         # setup an (old) cbapi connection
-        # TODO fix ssl_verify to use configuration file!
         self._old_cbapi = CbApi(
             self._cb_url,
             token=fletch_config.cb_comms.api_token,
-            ssl_verify=False
+            ssl_verify=fletch_config.cb_comms.ssl_verify
         )
 
         # setup a new cbapi-python connection
-        # TODO fix ssl_verify to use configuration file!
         self._cb = CbEnterpriseResponseAPI(
             url=self._cb_url,
             token=fletch_config.cb_comms.api_token,
-            ssl_verify=False
+            ssl_verify=fletch_config.cb_comms.ssl_verify
         )
 
         # grab our risk settings
@@ -73,24 +74,27 @@ class CbEventHandler(object):
                 # match on vulnerable binary feeds
                 if self.send_vulnerable_app_info:
                     if json_object['feed_name'] in self.vuln_feed_names:
+                        self.logger.debug("Dispatching Vulnerable App Event")
                         self._process_vuln_hit(json_object)
 
                 # match on process banned feeds
                 if self.send_banned_file_info:
                     if json_object['feed_name'] in self.banned_file_feed:
+                        self.logger.debug("Dispatching Process Banned Event")
                         self._process_banned_files(json_object)
 
             # Observe for watchlist hits that we should process
-            elif json_object['type'] == 'watchlist.hit.process':
+            elif json_object['type'] == 'watchlist.storage.hit.process':
 
                 # match on implication watchlists:
                 if self.send_implicated_app_info:
                     if json_object['watchlist_name'] in \
                             self.implication_watchlists:
+                        self.logger.debug("Dispatching Implication Event")
                         self._process_watchlist_hit(json_object)
 
         except Exception as e:
-            self._logger.exception(e)
+            self.logger.exception(e)
 
     def _process_vuln_hit(self, json_object):
         """
@@ -118,7 +122,7 @@ class CbEventHandler(object):
         # watch for more than one document, wasn't a case this was built for
         # since I'm not sure if it even exists?
         if len(json_object['docs']) > 1:
-            self._logger.warning('More than one doc in feed report??')
+            self.logger.warning('More than one doc in feed report??')
 
         # store all the threat intel now
         for doc in json_object["docs"]:
@@ -128,7 +132,8 @@ class CbEventHandler(object):
             # if we get a string back, just stuff it into an array for
             # processing. Not sure why it's possible to get different types
             # back from the same data element.. but there you go.
-            if isinstance(intel_data_ids, str):
+            if isinstance(intel_data_ids, str) or \
+                    isinstance(intel_data_ids, unicode):
                 intel_data_ids = [intel_data_ids]
 
             for report in intel_data_ids:
@@ -140,15 +145,15 @@ class CbEventHandler(object):
 
                 # the cb score is out of 100, instead of out of 10 like CVSS
                 # assumption: the CVSS score was just multiplied by 10
-                th.score = float(report['score']) / 10
+                th.score = float(report.score) / 10
 
                 # assume some structure here.. we need the CVE tag
                 # and I think the only way to do that is to extract it from
                 # the title (UGH).
                 # Expected title format:  CVE<id> description
                 # We only care about what is before the first space.
-                th.cve = report['title'].split(' ')[0]
-                self._logger.debug('Vuln Hits: Built Intel Hit:{}'.format(th))
+                th.cve = report.title.split(' ')[0]
+                self.logger.debug('Vuln Hits: Built Intel Hit:{}'.format(th))
 
                 # intentionally skipping the alliance link variable
                 # it isn't reliable enough in this instance
@@ -167,7 +172,7 @@ class CbEventHandler(object):
         for whatever vulnerability it was.
         :param json_object: JSON received from cb-event-forwarder
         """
-        self._logger.debug("Saw implication feed hit for process: {}".format(
+        self.logger.debug("Saw implication feed hit for process: {}".format(
             json_object["process_id"]
         ))
 
@@ -176,10 +181,18 @@ class CbEventHandler(object):
         # prepend this prefix so that we can do a string match.
         feed_prefix = "alliance_score_"
 
+        # separate the id and segment ids out
+        # unfortunately this some stuffed into a 'doc' entry.
+        # warn if we have more than one since we don't account for it
+        if len(json_object['docs']) != 1:
+            self.logger.warning("More than one 'doc' received??")
+
+        id_split = json_object["docs"][0]["unique_id"].split("-")
+        unique_id = "-".join(id_split[0:-1])
+        segment_id = int(id_split[-1])  # convert to int to drop extra 0's
+
         process_json = self._old_cbapi.process_events(
-                            json_object["process_id"],
-                            json_object["segment_id"]
-                        )["process"]
+                            unique_id, str(segment_id))["process"]
 
         # since we will be re-writing the process_json every loop
         # let's save the start point so we can come back to it later
@@ -242,27 +255,29 @@ class CbEventHandler(object):
 
                 # TODO add in rest of implicating process information
                 event.implicating_process.guid = \
-                    implicating_process_json["process_id"]
+                    implicating_process_json["unique_id"]
 
                 # TODO add in implicating process threat intel
 
                 # the vulnerable process information
-                event.vuln_process.md5 = process_json['md5']
-                event.vuln_process.guid = process_json['process_id']
+                event.vuln_process.md5 = process_json['process_md5']
+                event.vuln_process.guid = process_json['unique_id']
                 event.vuln_process.file_path = process_json['path']
                 event.vuln_process.name = process_json['process_name']
-                event.vuln_process.cb_analyze_link = "{0}/{1}/1".format(
-                    self._cb_url, event.vuln_process.guid)
+                event.vuln_process.cb_analyze_link = "{0}/{1}/{2}".format(
+                    self._cb_url, event.vuln_process.guid,
+                    process_json["segment_id"])
 
                 # the vulnerable process threat info, we can just take our
                 # list and stick it right into a threat intel report
-                event.threat_intel = all_threat_hits
-                self._logger.info(
+                event.threat_intel.hits = all_threat_hits
+                self.logger.info(
                     'Found Vulnerable Process {} from Implication {}'.format(
                         event.vuln_process.guid, event.implicating_process.guid
                     ))
 
-                # escape the while loop
+                # send our message and escape the while loop
+                self._core_event_chan.send(event)
                 break
 
             # if no relevant hits, then we need to grab the parent process
@@ -273,15 +288,20 @@ class CbEventHandler(object):
                 parent_id_split = \
                     process_json["parent_unique_id"].split("-")
                 parent_id = "-".join(parent_id_split[0:-1])
-                parent_segment = parent_id_split[-1]
+                parent_segment = int(parent_id_split[-1])  # convert: drop 0's
 
-                self._logger.debug("\tChasing id-segment: {0}".format(
-                    parent_id + '-' + parent_segment))
+                self.logger.debug("Chasing id-segment: {0} - {1}".format(
+                    parent_id, parent_segment))
 
                 # grab the parent process and do the loop over again
-                process_json = \
-                    self._old_cbapi.process_events(
-                        parent_id, parent_segment)["process"]
+                try:
+                    process_json = \
+                        self._old_cbapi.process_events(
+                            parent_id, parent_segment)["process"]
+                except HTTPError:
+                    self.logger.info("Stopping the process hunt, can't find "
+                                      "the parent process")
+                    break  # stop the search
 
     def _process_banned_files(self, json_object):
         """
@@ -291,8 +311,27 @@ class CbEventHandler(object):
         :param json_object:  the json from the cb-event-forwarder
         """
 
-        # TODO parse the json output and grab the file path, md5, and host
-        # TODO integrate some modules from punisher codebase to update bigfix
-        # TODO logging output.
+        ban_event = events.BannedFileEvent()
+        ban_event.host.name = json_object["hostname"]
 
-        pass
+        # assuming only a single doc again here
+        if len(json_object['docs']) != 1:
+            self.logger.warning("More than one doc received??")
+
+        # TODO: we probably shouldn't be looking up bes id's here. Leave that
+        # TODO: up to the bigfix later on in the processing chain.
+        ban_event.host.bigfix_id = int(self._bigfix_api.get_besid(
+            json_object['sensor_id']))
+
+        # TODO correct test case, it wasn't properly checking os type
+        ban_event.host.cb_sensor_id = json_object['sensor_id']
+        if json_object['docs'][0]["os_type"].lower() == "windows":
+            ban_event.host.os_type = events.Host.OS_TYPE_WINDOWS
+
+        ban_event.process.file_path = json_object["ioc_attr"]["hit_field_path"]
+        ban_event.process.md5 = json_object["ioc_attr"]["hit_field_md5"]
+        ban_event.timestamp = json_object["timestamp"]
+        # ban_event.process.cb_analyze_link = "{0}/{1}/{2}".format(
+        #    self._cb_url, ban_event.process.guid, json_object["segment_id"])
+
+        self._banned_file_chan.send(ban_event)
