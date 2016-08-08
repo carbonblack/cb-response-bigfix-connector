@@ -264,7 +264,8 @@ class BigFixApi:
         asset['cves'] = list()
         for hit in event.threat_intel.hits:
             asset['cves'].append({
-                "id": hit.cve,
+                # strip cve- off
+                "id": hit.cve[4:],
                 "risk": hit.score,
                 "implicated": implication_status
             })
