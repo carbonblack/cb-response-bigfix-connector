@@ -60,7 +60,7 @@ class TestCbEventHandler(TestCase):
         self.assertEqual(object_pass_back.host.bigfix_id,
                          3634135)
         self.assertEqual(object_pass_back.threat_intel.hits[0].cve,
-                         hit_example["report_id"])
+                         hit_example["report_id"][4:])
         self.assertEqual(object_pass_back.threat_intel.hits[0].score,
                          float(hit_example["report_score"])/10)
 

@@ -9,7 +9,7 @@ import logging
 
 class CbEventHandler(object):
 
-    def __init__(self, fletch_config, switchboard):
+    def __init__(self, fletch_config, switchboard, bigfix_api):
         self._switchboard = switchboard
         self._core_event_chan = self._switchboard.channel(
             fletch_config.sb_feed_hit_events)
@@ -18,7 +18,7 @@ class CbEventHandler(object):
 
         self._cb_url = fletch_config.cb_comms.url
 
-        self._bigfix_api = BigFixApi(fletch_config)
+        self._bigfix_api = bigfix_api
         self.logger = logging.getLogger(__name__)
 
         # setup an (old) cbapi connection
@@ -153,6 +153,10 @@ class CbEventHandler(object):
                 # Expected title format:  CVE<id> description
                 # We only care about what is before the first space.
                 th.cve = report.title.split(' ')[0]
+
+                # get rid of the 'CVE' part of the title,
+                # just want the id.
+                th.cve = th.cve[4:]
                 self.logger.debug('Vuln Hits: Built Intel Hit:{}'.format(th))
 
                 # intentionally skipping the alliance link variable
@@ -233,6 +237,10 @@ class CbEventHandler(object):
                                 # again, assumed title format:
                                 # Expected title format:  CVE<id> description
                                 th.cve = report_value['title'].split(' ')[0]
+
+                                # get rid of the 'CVE' part of the title,
+                                # just want the id.
+                                th.cve = th.cve[4:]
 
                                 # only add it to the list if the score is high
                                 if feed_min_score < report_value['score']:

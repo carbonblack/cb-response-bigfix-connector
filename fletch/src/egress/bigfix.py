@@ -4,8 +4,8 @@ from src.comms.bigfix_api import BigFixApi
 
 class EgressBigFix(object):
 
-    def __init__(self, fletch_config, switchboard):
-        self._api = BigFixApi(fletch_config)
+    def __init__(self, fletch_config, switchboard, bigfix_api):
+        self._api = bigfix_api
 
         # Register for vulnerable and implicated events
         self._feed_event_chan = switchboard.channel(

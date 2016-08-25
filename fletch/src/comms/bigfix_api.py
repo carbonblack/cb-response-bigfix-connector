@@ -4,7 +4,9 @@ import json
 import threading
 import datetime
 import logging
+import time
 from src.data.events import VulnerableAppEvent, ImplicatedAppEvent, Host
+from threading import Thread
 
 
 def _bigfix_lock_required(func):
@@ -41,7 +43,8 @@ class BigFixApi:
     # lock across all instances of this class
     _manager_lock = threading.RLock()
 
-    def __init__(self, fletch_config):
+    def __init__(self, fletch_config, switchboard):
+        self._switchboard = switchboard
         self._bigfix_host = fletch_config.ibm_bigfix.url
         self._bigfix_protocol = fletch_config.ibm_bigfix.protocol
         self._auth = (fletch_config.ibm_bigfix.username,
@@ -81,6 +84,45 @@ class BigFixApi:
         # and setup our caching layer
         self._cache_enabled = fletch_config.ibm_bigfix.cache_enabled
         self._cache = dict()
+
+        # finally kick off a thread responsible for sync'ing the
+        # contents of our cache up to the bigfix server.
+        # We make a new channel here so that we can capitalize on the
+        # switchboard's built-in shutdown messaging to close our thread
+        # when it is required
+        self._cache_post_chan = self._switchboard.channel('BigFixCachePost')
+
+        # start the listener
+        Thread(target=self._cache_purging_loop,
+               name="bigfix_api_cache_purging_timer").start()
+
+    def _cache_purging_loop(self):
+        """
+        NOTE: Run this in a separate thread, it is a never ending loop
+        unless a service shutdown is issued.
+        This function will, on the configured interval, grab the data from
+        the cache and send it over to bigfix.
+        """
+        while self._cache_post_chan.is_running():
+
+            # self.logger.debug("Current channel status: {}".format(
+            #     self._cache_post_chan.is_running()))
+
+            # repeat the sleep here to give us a chance to break the loop
+            for t in range(0, (self._packaging_interval*60/5) + 1):
+                if not self._cache_post_chan.is_running():
+                    break
+                time.sleep(5)
+
+            # send off the cached data
+            cache_output = self._cache_pull_and_delete()
+            if len(cache_output) > 0:
+                self.logger.info("Posting {} items to BigFix from "
+                                 "the local cache.".format(len(cache_output)))
+                self.put_dashboard_data(cache_output)
+            else:
+                self.logger.debug("Skipping scheduled BigFix post, no data in "
+                                  "the local cache.")
 
     def get_besid(self, cb_sensor_id):
         """
@@ -265,7 +307,7 @@ class BigFixApi:
         for hit in event.threat_intel.hits:
             asset['cves'].append({
                 # strip cve- off
-                "id": hit.cve[4:],
+                "id": hit.cve,
                 "risk": hit.score,
                 "implicated": implication_status
             })
@@ -275,7 +317,7 @@ class BigFixApi:
         if bypass_cache or self._cache_enabled is False:
             self.put_dashboard_data([asset])
         else:
-            self._cache_json_data(asset)
+            self._cache_json_data([asset])
 
     def process_banned_file_event(self, event):
         """
@@ -472,6 +514,7 @@ class BigFixApi:
                 (md5 of it as lowercase = "{1}" as lowercase)
                     of folders "{2}")}}
                     delete "{3}"
+            endif
             """.format(filename,
                        event.process.md5,
                        folder,

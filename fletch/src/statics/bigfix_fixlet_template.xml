@@ -26,21 +26,11 @@
         <Description>
             <PreLink>Click </PreLink>
             <Link>here</Link>
-            <PostLink> to delete the banned file across all hosts.</PostLink>
+            <PostLink> to delete the banned file.</PostLink>
         </Description>
         <ActionScript MIMEType="application/x-Fixlet-Windows-Shell">
             {}
         </ActionScript>
     </DefaultAction>
-    <Action ID="Action2">
-        <Description>
-            <PreLink>Click </PreLink>
-            <Link>here</Link>
-            <PostLink> to quarantine the banned file. (Not Yet Implemented)</PostLink>
-        </Description>
-        <ActionScript MIMEType="application/x-Fixlet-Windows-Shell">
-            // Quarantine actionscript here
-        </ActionScript>
-    </Action>
 </Fixlet>
 </BES>

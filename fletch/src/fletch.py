@@ -3,6 +3,7 @@ import logging
 from cbapi.response.models import Watchlist
 from cbapi import CbEnterpriseResponseAPI
 
+from comms.bigfix_api import BigFixApi
 from data.switchboard import Switchboard
 from fletch_config import Config
 from ingress.cbforwarder.cb_event_listener import CbEventListener
@@ -46,16 +47,18 @@ class CbBigFixIntegrator(object):
         )
         for watchlist in self._config.integration_implication_watchlists:
             if watchlist not in [w.name for w in cb.select(Watchlist)]:
-                # TODO print with logger
-                Loggy.CRITICAL("Can't find watchlist {0}, exiting.".format(
-                    watchlist))
+                self.logger.critical(
+                    "Can't find watchlist {0}, exiting.".format(watchlist))
                 exit(1)
 
         # establish our services
         self._sb = Switchboard()
+        self._bigfix_api = BigFixApi(self._config, self._sb)
         self._cb_listener = CbEventListener(self._config, self._sb)
-        self._cb_handler = CbEventHandler(self._config, self._sb)
-        self._bf_egress = EgressBigFix(self._config, self._sb)
+        self._cb_handler = CbEventHandler(self._config, self._sb,
+                                          self._bigfix_api)
+        self._bf_egress = EgressBigFix(self._config, self._sb,
+                                       self._bigfix_api)
         self.logger.debug("All Services Up")
 
         try:

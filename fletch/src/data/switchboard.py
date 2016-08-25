@@ -97,6 +97,14 @@ class Channel(object):
         self._shutdown_flag = True
         self._lock.release()
 
+    def is_running(self):
+        """
+        A method to allow non-member classes to ask if this channel
+        is still operating or has been shutdown
+        :return:  True if still running, False if shutdown
+        """
+        return not self._shutdown_flag
+
     def send(self, *args, **kwargs):
         """
         Add message to the queue. Accepts any
