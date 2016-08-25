@@ -8,6 +8,13 @@ import ConfigParser
 import json
 
 
+def str2bool(string):
+    if string in ['true', 't', 'True']:
+        return True
+    else:
+        return False
+
+
 def load_file_section(section):
     """
     Simple helper to load in a section of the config file
@@ -48,12 +55,12 @@ class CbComms(object):
         # must always end in a forward slash
         self.url = ''
 
-        # ssl verify, whether to check if TLS connection has valid certs
-        self.ssl_verify = False
-
         # load in the items from the config file
         for x in load_file_section('cb-enterprise-response'):
             self.__dict__[x[0]] = x[1]
+
+        # correct type to boolean
+        self.ssl_verify = str2bool(self.ssl_verify)
 
 
 class IbmBigfix(object):
@@ -69,31 +76,55 @@ class IbmBigfix(object):
         for x in load_file_section('ibm-bigfix'):
             self.__dict__[x[0]] = x[1]
 
+        # correct type to an integer
+        self.packaging_interval = int(self.packaging_interval)
+
+        # correct type to boolean
+        self.cache_enabled = str2bool(self.cache_enabled)
+        self.ssl_verify = str2bool(self.ssl_verify)
+
 
 class Config(object):
     """
     Class to hold our configuration data.
-    It is the plan to eventually read these things from a file.
+    Note: the values here can be overridden by the config.ini file
     """
     def __init__(self):
 
         # Main Switchboard channels
         self.sb_feed_hit_events = "sb_feed_hit_events"
+        self.sb_banned_file_events = "sb_banned_file_events"
 
         # Risk Scores
         self.risk_phase2_nvd = 5
         self.risk_phase2_nvd_and_iocs = 10
 
+        # Banned file feed name
+        self.banned_file_feed = 'cbbanning'
+
         # load in the items from the config file
         for x in load_file_section('integration-core'):
             self.__dict__[x[0]] = x[1]
 
+        # make the on/off switches actually booleans
+        self.send_vulnerable_app_info = bool(self.send_vulnerable_app_info)
+        self.send_implicated_app_info = bool(self.send_implicated_app_info)
+        self.send_banned_file_info = bool(self.send_banned_file_info)
+
         # a list of tuples for the feeds we should look for and the
         # minimum score that must be achieve before we consider it a
         # vulnerable app process
-        self.vulnerable_app_feeds = load_file_section(
+        self.vulnerable_app_feeds = list()
+        self._raw_vulnerable_app_feeds = load_file_section(
             'integration-vulnerable-app-feeds'
         )
+
+        # we need to convert all the scores from the config file into
+        # integers here for later comparisons.
+        for feed in self._raw_vulnerable_app_feeds:
+            self.vulnerable_app_feeds.append(
+                (feed[0], int(feed[1]))
+            )
 
         # fix the watchlist list so that it isn't a string
         self.integration_implication_watchlists = json.loads(
