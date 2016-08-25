@@ -1,21 +1,20 @@
-## The BigFix Integration GIT Repo
+## Project Fletch
 
-### Subprojects
-#### Fletch
+Integration between Cb Response and IBM Bigfix.
 
-The fulfillment of use cases #1 and #2 as part of the phase II integration. This project, designed to be used in Pycharm IDE, listens to output from a cb-event-forwarder, and processes the output. It has been built to do a few tasks:
+### Use
 
-1. Look for vulnerable apps executing
-2. Attribute detection events to vulnerable apps
-3. Look for banned flies attempting to execute
+This integration (in its initial stages) is designed to listen to data from the cb event forwarder, process it, and then ship the data over to IBM Bigfix for showing the dashboard data.
 
-For all of these tasks, we send the information over to BigFix in some form for them to display to a user.
 
-#### Punisher
+## Notes for deploying in the Cb-BigFix Demo Roadshow, May 2016.
 
-This sub-project is for the small python-based service that gets deployed to Cb Protection servers which, on some time interval, polls the Cb Protection server for all banned files across the enterprise, and informs BigFix of their presence (through the creation of fixlets).
+I) Setup the Phase II demo feed.
+    1) Copy the nvd-phase2.json file into the public web folder
+    sudo mkdir /var/www/cb/feeds
+    sudo cp cb-bigfix-nvd-phaseII.json /var/www/cb/feeds/
 
-There are two parts to this:
+    2) Add the feed into the CbR via Threat Intel page
+    https://localhost/feeds/cb-bigfix-nvd-phaseII.json
 
-1. The python code capable of doing all the functionality
-2. A small visual studio installer project that builds the MSI able to install the python code after it has been wrapped up in a self-contained EXE through the use of pyinstaller.
+II) Setup a second cb-event-forwarder instance 
