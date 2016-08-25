@@ -1,0 +1,46 @@
+{
+   "cb_server":"cbserver",
+   "cb_version":"5.1.0.151215.2305",
+   "comms_ip":"192.168.0.10",
+   "computer_name":"WIN7",
+   "docs":[
+      {
+         "alliance_data_cbbanning":"process_blocking",
+         "alliance_link_cbbanning":"http://www.bit9.com",
+         "alliance_score_cbbanning":"90",
+         "alliance_updated_cbbanning":"2014-01-01T01:15:07.000Z",
+         "childproc_count":0,
+         "crossproc_count":0,
+         "filemod_count":6,
+         "host_type":"workstation",
+         "last_update":"2016-05-24T17:04:44.820Z",
+         "modload_count":13,
+         "netconn_count":1,
+         "os_type":"windows",
+         "regmod_count":116,
+         "unique_id":"0000000a-0000-006c-01d1-b5ccb24b6380-00000001"
+      }
+   ],
+   "feed_id":3,
+   "feed_name":"cbbanning",
+   "group":"Internal AWS Clients",
+   "hostname":"WIN7",
+   "interface_ip":"192.168.0.10",
+   "ioc_attr":{
+      "hit_field_md5":"a083b045d3774dddcb64048f4516409e",
+      "hit_field_path":"c:\\users\\rad\\downloads\\chromeinstall-8u71.exe",
+      "hit_field_processblock":true,
+      "hit_field_result":"ProcessTerminated"
+   },
+   "ioc_type":"class",
+   "ioc_value":"com.carbonblack.cbfs.ingress_search.detectors.SensorProtectionBlock$ProcessBlocking",
+   "process_guid":"0000000a-0000-006c-01d1-b5ccb24b6380",
+   "process_id":"0000000a-0000-006c-01d1-b5ccb24b6380",
+   "report_id":"process_blocking",
+   "report_score":90,
+   "segment_id":1,
+   "sensor_id":10,
+   "server_name":"ip-192-168-0-11.us-west-2.compute.internal",
+   "timestamp":1464109606.457,
+   "type":"feed.storage.hit.process"
+}
