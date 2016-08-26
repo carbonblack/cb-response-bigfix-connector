@@ -7,6 +7,13 @@ instead of only storing strings and requiring all uses of this data to cast.
 import ConfigParser
 import json
 
+class FletchCriticalError(Exception):
+    """
+    Used to indicate that something has gone wrong enough that we
+    will not be able to recover.
+    """
+    pass
+
 
 def str2bool(string):
     if string in ['true', 't', 'True']:
@@ -21,12 +28,19 @@ def load_file_section(section, config_file_path):
     :param section - name of section to load
     :param config_file_path - path to the config file to load
     """
-    cp = ConfigParser.SafeConfigParser()
-    if config_file_path is None:
-        config_file_path = 'config.ini'
-    cp.read([config_file_path])
+    try:
+        cp = ConfigParser.SafeConfigParser()
+        cp.read([config_file_path])
+        config_items = cp.items(section)
 
-    return cp.items(section)
+    except ConfigParser.NoSectionError:
+        raise FletchCriticalError(
+            "Error in Config File. Unable to find "
+            "file '{}' or section '{}' is missing.".format(
+                config_file_path, section
+            ))
+
+    return config_items
 
 
 class CbEventListener(object):
@@ -99,8 +113,7 @@ class Config(object):
     Class to hold our configuration data.
     Note: the values here can be overridden by the config.ini file
     """
-    def __init__(self, config_file_path=None):
-
+    def __init__(self, config_file_path):
         self._config_file = config_file_path
 
         # Main Switchboard channels

@@ -73,10 +73,10 @@ class BigFixApi:
             '{0}://{1}/api/query'.format(
                 self._bigfix_protocol, self._bigfix_host)
         self._bigfix_fixlet_api_url = \
-            '{0}://{1}/api/fixlet/custom/{}'.format(
+            '{0}://{1}/api/fixlet/custom/{2}'.format(
                 self._bigfix_protocol, self._bigfix_host, self._bigfix_custom_site_name)
         self._bigfix_fixlets_api_url = \
-            '{0}://{1}/api/fixlets/custom/{}'.format(
+            '{0}://{1}/api/fixlets/custom/{2}'.format(
                 self._bigfix_protocol, self._bigfix_host, self._bigfix_custom_site_name)
 
         # setup the logging

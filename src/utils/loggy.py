@@ -16,6 +16,7 @@ class Loggy(object):
     DEBUG = logging.DEBUG
 
     AC_STDOUT_DEBUG = "STDOUT_DEBUG"
+    AC_FILE = "FILE"
 
     def __init__(self,
                  logger_format=None,
@@ -44,6 +45,8 @@ class Loggy(object):
         if auto_config_flags:
             if Loggy.AC_STDOUT_DEBUG in auto_config_flags:
                 self.setup_log_to_stdout(Loggy.DEBUG)
+            if Loggy.AC_FILE in auto_config_flags:
+                self.setup_log_to_file('connector.log', log_level=log_level)
 
         # Output an initialized banner
         self._logger.info("---------------------- "

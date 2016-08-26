@@ -1,4 +1,6 @@
 import logging
+import argparse
+import sys
 from time import sleep
 
 from cbapi import CbEnterpriseResponseAPI
@@ -8,6 +10,7 @@ from comms.bigfix_api import BigFixApi
 from data.switchboard import Switchboard
 from egress.bigfix import EgressBigFix
 from fletch_config import Config
+from fletch_config import FletchCriticalError
 from ingress.cbforwarder.cb_event_handler import CbEventHandler
 from ingress.cbforwarder.cb_event_listener import CbEventListener
 from utils.loggy import Loggy
@@ -15,19 +18,20 @@ from utils.loggy import Loggy
 
 class CbBigFixIntegrator(object):
 
-    def __init__(self, config_path="."):
+    def __init__(self, config_file_path):
         print("")
         print("Carbon Black - IBM Bigfix Integration Service")
         print("Release Version 1.0")
         print("")
 
         # load in all the configuration options
-        self._config = Config(config_path)
+        self._config = Config(config_file_path)
 
         # setup logging
         # TODO respect the user configuration of log level
         self.loggy = Loggy(log_level=Loggy.DEBUG,
-                           auto_config_flags=[Loggy.AC_STDOUT_DEBUG])
+                           auto_config_flags=[Loggy.AC_STDOUT_DEBUG,
+                                              Loggy.AC_FILE])
         self.logger = logging.getLogger(__name__)
         self.logger.debug('Powering Up...')
 
@@ -65,10 +69,26 @@ class CbBigFixIntegrator(object):
         try:
             while True:
                 sleep(1000)
+
+        # TODO handle shutdown signals here
         except KeyboardInterrupt:
             self._cb_listener.shutdown()
             self._sb.shutdown()
             print("Goodbye")
 
 if __name__ == "__main__":
-    CbBigFixIntegrator()
+    parser = argparse.ArgumentParser(description='Cb Response, IBM Bigfix Integration Connector.')
+    parser.add_argument('-c', '--config', metavar='c', nargs='?',
+                        default='/etc/cb/integrations/bigfix/connector.config',
+                        help='path to the configuration file')
+
+    args = parser.parse_args()
+    try:
+        CbBigFixIntegrator(args.config)
+    except FletchCriticalError as e:
+        logging.critical(e.message)
+        sys.exit(1)
+    except Exception as e:
+        logging.exception(e)
+        sys.exit(2)
+

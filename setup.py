@@ -29,6 +29,7 @@ class bdist_binaryrpm(bdist_rpm):
 
         # Lots TODO here: generate spec file on demand from the rest of this setup.py file, for starters...
         # self._make_spec_file()
+        # ENSURE PRELINK IS DISABLED BEFORE RUNNING THIS, causes digest errors in the rpm if you don't.
         call(['rpmbuild', '-bb', '-vv', 'rpmbuild.spec'])
 
 
