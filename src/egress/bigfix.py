@@ -1,5 +1,5 @@
 import logging
-from src.comms.bigfix_api import BigFixApi
+from comms.bigfix_api import BigFixApi
 
 
 class EgressBigFix(object):

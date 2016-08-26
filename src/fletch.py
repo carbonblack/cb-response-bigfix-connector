@@ -1,27 +1,28 @@
-from time import sleep
 import logging
-from cbapi.response.models import Watchlist
+from time import sleep
+
 from cbapi import CbEnterpriseResponseAPI
+from cbapi.response.models import Watchlist
 
 from comms.bigfix_api import BigFixApi
 from data.switchboard import Switchboard
-from fletch_config import Config
-from ingress.cbforwarder.cb_event_listener import CbEventListener
-from ingress.cbforwarder.cb_event_handler import CbEventHandler
 from egress.bigfix import EgressBigFix
+from fletch_config import Config
+from ingress.cbforwarder.cb_event_handler import CbEventHandler
+from ingress.cbforwarder.cb_event_listener import CbEventListener
 from utils.loggy import Loggy
 
 
 class CbBigFixIntegrator(object):
 
-    def __init__(self):
+    def __init__(self, config_path="."):
         print("")
         print("Carbon Black - IBM Bigfix Integration Service")
         print("Release Version 1.0")
         print("")
 
         # load in all the configuration options
-        self._config = Config()
+        self._config = Config(config_path)
 
         # setup logging
         # TODO respect the user configuration of log level
@@ -31,12 +32,12 @@ class CbBigFixIntegrator(object):
         self.logger.debug('Powering Up...')
 
         # use the fake bigfix server:
-        if False:
-            import tools.fake_bigfix_server as bigfix_server
-            from threading import Thread
-            self._config.ibm_bigfix.url = 'localhost:5000'
-            self._config.ibm_bigfix.protocol = 'http'
-            Thread(target=bigfix_server.app.run).start()
+        # if False:
+        #     from test import tools as bigfix_server
+        #     from threading import Thread
+        #     self._config.ibm_bigfix.url = 'localhost:5000'
+        #     self._config.ibm_bigfix.protocol = 'http'
+        #     Thread(target=bigfix_server.app.run).start()
 
         # connect to the Carbon Black response server
         # and ensure the watchlists we need are in place

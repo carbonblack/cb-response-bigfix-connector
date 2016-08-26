@@ -1,7 +1,8 @@
-import tools.fake_bigfix_server as fake_bigfix_server
+import time
 from random import randrange
 from threading import Thread
-import time
+
+from test import tools as fake_bigfix_server
 
 
 def mutate_to_test_config(

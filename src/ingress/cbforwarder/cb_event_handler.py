@@ -1,9 +1,9 @@
-from src.comms.bigfix_api import BigFixApi
+from comms.bigfix_api import BigFixApi
 from requests.exceptions import HTTPError
 from cbapi import CbApi
 from cbapi import CbEnterpriseResponseAPI
 from cbapi.response.models import ThreatReport
-import src.data.events as events
+import data.events as events
 import logging
 
 

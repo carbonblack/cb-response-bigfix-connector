@@ -15,13 +15,17 @@ def str2bool(string):
         return False
 
 
-def load_file_section(section):
+def load_file_section(section, config_file_path):
     """
     Simple helper to load in a section of the config file
     :param section - name of section to load
+    :param config_file_path - path to the config file to load
     """
     cp = ConfigParser.SafeConfigParser()
-    cp.read(['config.ini', '../config.ini'])
+    if config_file_path is None:
+        config_file_path = 'config.ini'
+    cp.read([config_file_path])
+
     return cp.items(section)
 
 
@@ -29,13 +33,15 @@ class CbEventListener(object):
     """
     Configuration for connecting to the Cb Event Forwarder
     """
-    def __init__(self):
+    def __init__(self, config_file_path):
 
         # name of channel to ship received JSON messages to
         self.sb_incoming_cb_events = "sb_incoming_cb_events"
 
+        # TODO defaults init
+
         # load in the items from the config file
-        for x in load_file_section('cb-event-forwarder'):
+        for x in load_file_section('cb-event-forwarder', config_file_path):
             self.__dict__[x[0]] = x[1]
 
         # cast to int.. port to communicate with the cb-event-forwarder
@@ -47,16 +53,17 @@ class CbComms(object):
     Configuration for the connection to the Cb Response server
     This is mainly for using the API on the server to do queries
     """
-    def __init__(self):
+    def __init__(self, config_file_path):
         # API token to use
         self.api_token = ''
 
+        # TODO defaults init
         # URL to connect to
         # must always end in a forward slash
         self.url = ''
 
         # load in the items from the config file
-        for x in load_file_section('cb-enterprise-response'):
+        for x in load_file_section('cb-enterprise-response', config_file_path):
             self.__dict__[x[0]] = x[1]
 
         # correct type to boolean
@@ -67,13 +74,16 @@ class IbmBigfix(object):
     """
     Configuration for the connection to the IBM bigfix server
     """
-    def __init__(self):
+    def __init__(self, config_file_path):
         self.url = ''
         self.username = ''
         self.password = ''
 
+        # TODO defaults init
+        self.bigfix_custom_site_name = 'Carbon Black'
+
         # load in the items from the config file
-        for x in load_file_section('ibm-bigfix'):
+        for x in load_file_section('ibm-bigfix', config_file_path):
             self.__dict__[x[0]] = x[1]
 
         # correct type to an integer
@@ -89,7 +99,9 @@ class Config(object):
     Class to hold our configuration data.
     Note: the values here can be overridden by the config.ini file
     """
-    def __init__(self):
+    def __init__(self, config_file_path=None):
+
+        self._config_file = config_file_path
 
         # Main Switchboard channels
         self.sb_feed_hit_events = "sb_feed_hit_events"
@@ -102,8 +114,10 @@ class Config(object):
         # Banned file feed name
         self.banned_file_feed = 'cbbanning'
 
+        # TODO defaults init
+
         # load in the items from the config file
-        for x in load_file_section('integration-core'):
+        for x in load_file_section('integration-core', self._config_file):
             self.__dict__[x[0]] = x[1]
 
         # make the on/off switches actually booleans
@@ -116,7 +130,8 @@ class Config(object):
         # vulnerable app process
         self.vulnerable_app_feeds = list()
         self._raw_vulnerable_app_feeds = load_file_section(
-            'integration-vulnerable-app-feeds'
+            'integration-vulnerable-app-feeds',
+            self._config_file
         )
 
         # we need to convert all the scores from the config file into
@@ -132,6 +147,6 @@ class Config(object):
         )
 
         # Load in the other option blocks
-        self.cb_event_listener = CbEventListener()
-        self.cb_comms = CbComms()
-        self.ibm_bigfix = IbmBigfix()
+        self.cb_event_listener = CbEventListener(self._config_file)
+        self.cb_comms = CbComms(self._config_file)
+        self.ibm_bigfix = IbmBigfix(self._config_file)

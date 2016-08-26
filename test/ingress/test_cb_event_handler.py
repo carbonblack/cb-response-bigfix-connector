@@ -7,6 +7,7 @@ from src.data.switchboard import Switchboard
 from src.fletch_config import Config
 from src.ingress.cbforwarder.cb_event_handler import CbEventHandler
 from src.utils.loggy import Loggy
+from src.comms.bigfix_api import BigFixApi
 import src.data.events as events
 
 # from test.test_config import mutate_to_test_config
@@ -28,7 +29,8 @@ class TestCbEventHandler(TestCase):
         self.addCleanup(self.cleanup_switchboard, sb)
         test_config = Config()
 
-        CbEventHandler(test_config, sb)
+        _bigfix = BigFixApi(test_config, sb)
+        CbEventHandler(test_config, sb, _bigfix)
         incoming = sb.channel(
             test_config.cb_event_listener.sb_incoming_cb_events)
 
@@ -83,7 +85,8 @@ class TestCbEventHandler(TestCase):
 
         cve_to_check_for = "CVE-2010-2883"
 
-        CbEventHandler(test_config, sb)
+        _bigfix = BigFixApi(test_config, sb)
+        CbEventHandler(test_config, sb, _bigfix)
         incoming = sb.channel(
             test_config.cb_event_listener.sb_incoming_cb_events)
 

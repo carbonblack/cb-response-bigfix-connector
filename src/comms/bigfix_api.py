@@ -5,7 +5,7 @@ import threading
 import datetime
 import logging
 import time
-from src.data.events import VulnerableAppEvent, ImplicatedAppEvent, Host
+from data.events import VulnerableAppEvent, ImplicatedAppEvent, Host
 from threading import Thread
 
 
@@ -52,6 +52,7 @@ class BigFixApi:
         self._manager_lock = BigFixApi._manager_lock
         self._packaging_interval = fletch_config.ibm_bigfix.packaging_interval
         self._bigfix_ssl_verify = fletch_config.ibm_bigfix.ssl_verify
+        self._bigfix_custom_site_name = fletch_config.ibm_bigfix.bigfix_custom_site_name
 
         # we use this both as a template and also as a
         # temporary store for the dashboard XML structure
@@ -72,11 +73,11 @@ class BigFixApi:
             '{0}://{1}/api/query'.format(
                 self._bigfix_protocol, self._bigfix_host)
         self._bigfix_fixlet_api_url = \
-            '{0}://{1}/api/fixlet/custom/Carbon%20Black'.format(
-                self._bigfix_protocol, self._bigfix_host)
+            '{0}://{1}/api/fixlet/custom/{}'.format(
+                self._bigfix_protocol, self._bigfix_host, self._bigfix_custom_site_name)
         self._bigfix_fixlets_api_url = \
-            '{0}://{1}/api/fixlets/custom/Carbon%20Black'.format(
-                self._bigfix_protocol, self._bigfix_host)
+            '{0}://{1}/api/fixlets/custom/{}'.format(
+                self._bigfix_protocol, self._bigfix_host, self._bigfix_custom_site_name)
 
         # setup the logging
         self.logger = logging.getLogger(__name__)

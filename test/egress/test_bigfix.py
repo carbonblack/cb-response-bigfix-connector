@@ -44,7 +44,7 @@ class TestEgressBigFix(TestCase):
             Config(),
             fake_bigfix_server_requests=5,
         )
-        bigfix = BigFixApi(test_config)
+        bigfix = BigFixApi(test_config, sb)
 
         # back up whatever used to be on the dashboard
         original_data = bigfix.get_dashboard_data()
@@ -60,7 +60,8 @@ class TestEgressBigFix(TestCase):
             implicated = 0
 
         try:
-            EgressBigFix(test_config, sb)
+            _bigfix = BigFixApi(test_config, sb)
+            EgressBigFix(test_config, sb, _bigfix)
             outgoing_channel = sb.channel(test_config.sb_feed_hit_events)
             vuln_event = VulnerableAppEvent()
             vuln_event_hit = ThreatIntelHit()

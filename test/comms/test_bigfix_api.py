@@ -1,19 +1,23 @@
-from unittest import TestCase, main as unittest_main
+from copy import deepcopy as deepcopy
 from time import sleep
+from unittest import TestCase, main as unittest_main
+
+import src.data.events as events
+from src.comms.bigfix_api import BigFixApi
+from src.data.switchboard import Switchboard
 from src.fletch_config import Config
 from test.test_config import mutate_to_test_config
-from src.comms.bigfix_api import BigFixApi
-from copy import deepcopy as deepcopy
-from tools.deep_compare import deep_compare as deep_compare
-import src.data.events as events
+from test.tools import deep_compare as deep_compare
 
 
 class TestCommsBigFix(TestCase):
     def test_get_besid(self):
         test_config = Config()
-        bigfix = BigFixApi(test_config)
+        _sb = Switchboard()
+        bigfix = BigFixApi(test_config, _sb)
         besid = bigfix.get_besid(10)
         self.assertEqual(3634135, besid)
+        _sb.shutdown()
 
 
 class TestCommsBigFixCache(TestCase):
@@ -21,7 +25,8 @@ class TestCommsBigFixCache(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.test_config = Config()
-        cls.bigfix = BigFixApi(cls.test_config)
+        cls._sb = Switchboard()
+        cls.bigfix = BigFixApi(cls.test_config, cls._sb)
 
     def test_cache_layer_append(self):
 
@@ -70,7 +75,8 @@ class TestCommsDashboard(TestCase):
             Config(),
             fake_bigfix_server_requests=2
         )
-        cls.bigfix = BigFixApi(cls.test_config)
+        cls._sb = Switchboard()
+        cls.bigfix = BigFixApi(cls.test_config, cls._sb)
 
     def test_dashboard_content_update(self):
 
@@ -106,7 +112,8 @@ class TestBannedFileFixlets(TestCase):
             Config(),
             fake_bigfix_server_enable=False
         )
-        cls.bigfix = BigFixApi(cls.test_config)
+        cls._sb = Switchboard()
+        cls.bigfix = BigFixApi(cls.test_config, cls._sb)
 
     def test_full_fixlet_creation(self):
 
