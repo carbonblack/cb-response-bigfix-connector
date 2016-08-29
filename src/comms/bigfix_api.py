@@ -390,9 +390,11 @@ class BigFixApi:
 
     def _get_remediation_fixlet_id(self, md5):
         # see if we already have a fixlet of this nature.
-        query_string = 'ids of bes fixlets whose (name of site of' \
-                       ' it = "Carbon Black" AND name of it as string' \
-                       ' as lowercase contains "{0}" as lowercase)'.format(md5)
+        query_string = \
+            'ids of bes fixlets whose (name of site of' \
+            ' it = "{0}" AND name of it as string' \
+            ' as lowercase contains "{1}" as lowercase)'.format(
+                self._bigfix_custom_site_name, md5)
 
         req_result = requests.get(
             self._bigfix_query_api_url,
@@ -496,7 +498,8 @@ class BigFixApi:
             relevance_command += " OR "
 
         filename = event.process.file_path.split('\\')[-1]
-        folder = event.process.file_path.split('\\')[1:-2]
+        folder_split = event.process.file_path.split('\\')[0:-1]
+        folder = "\\".join(folder_split)
 
         # if we already have this path in the fixlet, we don't need to add it
         # again, skip the remaining part of this loop
@@ -510,10 +513,10 @@ class BigFixApi:
             """.format(filename, event.process.md5, folder)
 
         # build the delete statements
+        # WARNING: newlines are important here, don't
+        # break up the if-statement so that we keep bigfix happy.
         actionscript_command += """
-            if {{(exists file "{0}" whose
-                (md5 of it as lowercase = "{1}" as lowercase)
-                    of folders "{2}")}}
+            if {{(exists file "{0}" whose (md5 of it as lowercase = "{1}" as lowercase) of folders "{2}")}}
                     delete "{3}"
             endif
             """.format(filename,

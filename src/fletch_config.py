@@ -6,6 +6,8 @@ instead of only storing strings and requiring all uses of this data to cast.
 
 import ConfigParser
 import json
+from utils.loggy import Loggy
+
 
 class FletchCriticalError(Exception):
     """
@@ -127,9 +129,11 @@ class Config(object):
         # Banned file feed name
         self.banned_file_feed = 'cbbanning'
 
-        # TODO defaults init
+        # Default Param Values
+        self.log_level = "DEBUG"
 
         # load in the items from the config file
+        # TODO clean this up to read values individually and specify defaults
         for x in load_file_section('integration-core', self._config_file):
             self.__dict__[x[0]] = x[1]
 
@@ -137,6 +141,12 @@ class Config(object):
         self.send_vulnerable_app_info = bool(self.send_vulnerable_app_info)
         self.send_implicated_app_info = bool(self.send_implicated_app_info)
         self.send_banned_file_info = bool(self.send_banned_file_info)
+
+        # handle log level assignment
+        if self.log_level == "DEBUG":
+            self.log_level = Loggy.DEBUG
+        else:
+            self.log_level = Loggy.INFO
 
         # a list of tuples for the feeds we should look for and the
         # minimum score that must be achieve before we consider it a

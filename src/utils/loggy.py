@@ -16,6 +16,7 @@ class Loggy(object):
     DEBUG = logging.DEBUG
 
     AC_STDOUT_DEBUG = "STDOUT_DEBUG"
+    AC_STDOUT = "STDOUT"
     AC_FILE = "FILE"
 
     def __init__(self,
@@ -25,7 +26,7 @@ class Loggy(object):
 
         # logger format
         if logger_format is None:
-            logger_format = "%(asctime)s %(levelname)s - " \
+            logger_format = "%(asctime)s %(levelname)s - [%(thread)d] " \
                             "%(filename)s:%(lineno)s - %(funcName)s : " \
                             "%(message)s"
 
@@ -45,6 +46,8 @@ class Loggy(object):
         if auto_config_flags:
             if Loggy.AC_STDOUT_DEBUG in auto_config_flags:
                 self.setup_log_to_stdout(Loggy.DEBUG)
+            if Loggy.AC_STDOUT in auto_config_flags:
+                self.setup_log_to_stdout(log_level)
             if Loggy.AC_FILE in auto_config_flags:
                 self.setup_log_to_file('connector.log', log_level=log_level)
 

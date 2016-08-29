@@ -29,7 +29,7 @@ class CbBigFixIntegrator(object):
 
         # setup logging
         # TODO respect the user configuration of log level
-        self.loggy = Loggy(log_level=Loggy.DEBUG,
+        self.loggy = Loggy(log_level=self._config.log_level,
                            auto_config_flags=[Loggy.AC_STDOUT_DEBUG,
                                               Loggy.AC_FILE])
         self.logger = logging.getLogger(__name__)

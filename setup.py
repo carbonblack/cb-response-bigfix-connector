@@ -151,7 +151,7 @@ scripts = {
 
 setup(
     name='cb-response-bigfix-connector',
-    version="1.0",
+    version="0.9.1",
     packages=find_packages(exclude=['test.*']),
     url='http://www.carbonblack.com/',
     license='MIT',
