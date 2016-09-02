@@ -89,6 +89,7 @@ class CbEventListener(object):
             for event in poll_data:
                 (client_socket, address) = server_socket.accept()
                 Thread(target=self._connection_handler,
+                       name="cb_event_listener_server_thread_handler",
                        args=(client_socket, address)).start()
 
         server_socket.close()

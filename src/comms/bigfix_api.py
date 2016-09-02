@@ -342,6 +342,7 @@ class BigFixApi:
 
         # if we have no updates to do, this will be set to None
         banned_file_data = self._build_fixlet_commands(event, banned_file_data)
+
         if banned_file_data is not None:
             self.logger.debug('Sending fixlet to BigFix.')
             self._put_remediation_fixlet(

@@ -54,7 +54,7 @@ class CbBigFixIntegrator(object):
             if watchlist not in [w.name for w in cb.select(Watchlist)]:
                 self.logger.critical(
                     "Can't find watchlist {0}, exiting.".format(watchlist))
-                exit(1)
+                sys.exit(1)
 
         # establish our services
         self._sb = Switchboard()
