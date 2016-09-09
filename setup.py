@@ -8,7 +8,10 @@ from setuptools import find_packages
 
 import os
 from subprocess import call
+from datetime import datetime
 
+
+__version__ = datetime.now().strftime('%Y.%m.%d.%H.%M.%S')
 __author__ = 'Carbon Black, R&D'
 
 
@@ -26,6 +29,14 @@ class bdist_binaryrpm(bdist_rpm):
         self.run_command('sdist')
         source = sdist.get_archive_files()[0]
         self.copy_file(source, os.path.join(os.getenv("HOME"), "rpmbuild", "SOURCES/"))
+
+        # auto set the version within the RPM spec file
+        call_result = call(['cp', 'rpmbuild.spec.template', 'rpmbuild.spec'])
+        call_result = call(['sed',
+                            '-i',
+                            's\\version 0.0.9\\version {}\g'.format(self.distribution.metadata.version),
+                            'rpmbuild.spec'
+                            ])
 
         # Lots TODO here: generate spec file on demand from the rest of this setup.py file, for starters...
         # self._make_spec_file()
@@ -138,42 +149,45 @@ def get_data_files(rootdir):
 
     return results
 
-data_files = get_data_files("root")
-# data_files.append(('', ['pyinstaller.spec']))
-# data_files.append('scripts/cb-wildfire-connector')
 
-scripts = {
-   'cb-response-bigfix-connector': {
-       'spec': 'pyinstaller.spec',
-       'dest': '/usr/share/cb/integrations/bigfix/bin/'
-   }
-}
+if __name__ == "__main__":
 
-setup(
-    name='cb-response-bigfix-connector',
-    version="0.9.2",
-    packages=find_packages(exclude=['test.*']),
-    url='http://www.carbonblack.com/',
-    license='MIT',
-    author='Carbon Black',
-    author_email='dev-support@bit9.com',
-    description='Carbon Black BigFix Integration - Cb Response Module',
-    data_files=data_files,
-    classifiers=[
-        'Development Status :: 4 - Beta',
+    data_files = get_data_files("root")
+    # data_files.append(('', ['pyinstaller.spec']))
+    # data_files.append('scripts/cb-wildfire-connector')
 
-        # Indicate who your project is intended for
-        'Intended Audience :: System Administrators',
+    scripts = {
+       'cb-response-bigfix-connector': {
+           'spec': 'pyinstaller.spec',
+           'dest': '/usr/share/cb/integrations/bigfix/bin/'
+       }
+    }
 
-        # Pick your license as you wish (should match "license" above)
-         'License :: OSI Approved :: MIT License',
+    setup(
+        name='cb-response-bigfix-connector',
+        version=__version__,
+        packages=find_packages(exclude=['test.*']),
+        url='http://www.carbonblack.com/',
+        license='MIT',
+        author='Carbon Black',
+        author_email='dev-support@bit9.com',
+        description='Carbon Black BigFix Integration - Cb Response Module',
+        data_files=data_files,
+        classifiers=[
+            'Development Status :: 4 - Beta',
 
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-    ],
-    keywords='carbonblack bit9',
-    cmdclass={'install_cb': install_cb, 'bdist_binaryrpm': bdist_binaryrpm}
-)
+            # Indicate who your project is intended for
+            'Intended Audience :: System Administrators',
+
+            # Pick your license as you wish (should match "license" above)
+             'License :: OSI Approved :: MIT License',
+
+            # Specify the Python versions you support here. In particular, ensure
+            # that you indicate whether you support Python 2, Python 3 or both.
+            'Programming Language :: Python :: 2',
+            'Programming Language :: Python :: 2.6',
+            'Programming Language :: Python :: 2.7',
+        ],
+        keywords='carbonblack bit9',
+        cmdclass={'install_cb': install_cb, 'bdist_binaryrpm': bdist_binaryrpm}
+    )

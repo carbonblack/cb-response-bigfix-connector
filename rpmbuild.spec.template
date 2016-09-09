@@ -1,6 +1,6 @@
 %define name cb-response-bigfix-connector
-%define version 2016.9.8.23.2.9
-%define unmangled_version 2016.9.8.23.2.9
+%define version 0.0.9
+%define unmangled_version 0.0.9
 %define release 1
 %global _enable_debug_package 0
 %global debug_package %{nil}

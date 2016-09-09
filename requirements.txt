@@ -1,4 +1,3 @@
 cbapi==0.9.6
 requests==2.11.1
-flask
-cx_freeze
+PyInstaller==3.2
