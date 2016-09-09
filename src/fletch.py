@@ -18,7 +18,7 @@ from utils.loggy import Loggy
 
 class CbBigFixIntegrator(object):
 
-    def __init__(self, config_file_path):
+    def __init__(self, config_file_path, log_file_path):
         print("")
         print("Carbon Black - IBM Bigfix Integration Service")
         print("Release Version 1.0")
@@ -30,6 +30,7 @@ class CbBigFixIntegrator(object):
         # setup logging
         # TODO respect the user configuration of log level
         self.loggy = Loggy(log_level=self._config.log_level,
+                           log_file_location=log_file_path,
                            auto_config_flags=[Loggy.AC_STDOUT_DEBUG,
                                               Loggy.AC_FILE])
         self.logger = logging.getLogger(__name__)
@@ -81,10 +82,13 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--config', metavar='c', nargs='?',
                         default='/etc/cb/integrations/bigfix/connector.config',
                         help='path to the configuration file')
+    parser.add_argument('-l', '--logfile', metavar='c', nargs='?',
+                        default='/var/log/cb/integrations/bigfix/connector.log',
+                        help='path to the log file')
 
     args = parser.parse_args()
     try:
-        CbBigFixIntegrator(args.config)
+        CbBigFixIntegrator(args.config, args.logfile)
     except FletchCriticalError as e:
         logging.critical(e.message)
         sys.exit(1)

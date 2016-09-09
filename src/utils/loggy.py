@@ -22,6 +22,7 @@ class Loggy(object):
     def __init__(self,
                  logger_format=None,
                  log_level=INFO,
+                 log_file_location='connector.log',
                  auto_config_flags=list()):
 
         # logger format
@@ -49,7 +50,7 @@ class Loggy(object):
             if Loggy.AC_STDOUT in auto_config_flags:
                 self.setup_log_to_stdout(log_level)
             if Loggy.AC_FILE in auto_config_flags:
-                self.setup_log_to_file('connector.log', log_level=log_level)
+                self.setup_log_to_file(log_file_location, log_level=log_level)
 
         # Output an initialized banner
         self._logger.info("---------------------- "
