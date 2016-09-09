@@ -36,7 +36,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %posttrans
 # not auto-starting because conf needs to be updated
-start cb-response-bigfix-connector
+# start cb-response-bigfix-connector
 
 %preun
 # run the null command here to ensure we always return success
