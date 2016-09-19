@@ -1,8 +1,7 @@
-from comms.bigfix_api import BigFixApi
 from requests.exceptions import HTTPError
 from cbapi import CbApi
 from cbapi import CbEnterpriseResponseAPI
-from cbapi.response.models import ThreatReport
+from cbapi.response.models import Process as cbapiProcess
 import data.events as events
 import logging
 
@@ -42,6 +41,7 @@ class CbEventHandler(object):
         # grab the vulnerability feed settings
         self.vuln_feeds_entries = fletch_config.vulnerable_app_feeds
         self.vuln_feed_names = [feed[0] for feed in self.vuln_feeds_entries]
+        self.vuln_watchlist_name = fletch_config.vuln_watchlist_name
 
         # grab the banned file feed name
         self.banned_file_feed = fletch_config.banned_file_feed
@@ -71,12 +71,6 @@ class CbEventHandler(object):
             # watch for feed events so we can inspect processes
             if json_object['type'] == 'feed.storage.hit.process':
 
-                # match on vulnerable binary feeds
-                if self.send_vulnerable_app_info:
-                    if json_object['feed_name'] in self.vuln_feed_names:
-                        self.logger.debug("Dispatching Vulnerable App Event")
-                        self._process_vuln_hit(json_object)
-
                 # match on process banned feeds
                 if self.send_banned_file_info:
                     if json_object['feed_name'] in self.banned_file_feed:
@@ -85,6 +79,13 @@ class CbEventHandler(object):
 
             # Observe for watchlist hits that we should process
             elif json_object['type'] == 'watchlist.storage.hit.process':
+
+                # match on vulnerable app launch watchlist
+                if self.send_vulnerable_app_info:
+                    if json_object['watchlist_name'] == \
+                            self.vuln_watchlist_name:
+                        self.logger.debug("Dispatching Vulnerable App Event")
+                        self._process_vuln_hit(json_object)
 
                 # match on implication watchlists:
                 if self.send_implicated_app_info:
@@ -98,77 +99,76 @@ class CbEventHandler(object):
 
     def _process_vuln_hit(self, json_object):
         """
-        When we notice a feed hit from one of our vulnerability feeds
-        come over the wire, process the data into VulnerableAppEvent objects
-        and ship over to the main event stream for output processing
+        Note: this function was rewritten from processing feed hit events
+        into processing watchlist events as part of adapting to the discovery
+        that in Cb Response 5.1/5.2 modloads of vulnerable binaries does NOT
+        trigger a feed hit.
+
+        When we notice a watchlist hit from our auto-generated watchlist (based
+        upon the names of the feeds we are supposed to monitor), process the
+        data into VulnerableAppEvent objects and ship over to the main event
+        stream for output processing.
+
         :param json_object: JSON received from cb-event-forwarder
         """
+
         event = events.VulnerableAppEvent()
-        feed_id = json_object['feed_id']
-        feed_name = json_object['feed_name']
+        process_id = json_object['process_id']
+        process_doc = self._cb.select(cbapiProcess, process_id)
 
         # host information
-        event.host.name = json_object['hostname']
-        event.host.cb_sensor_id = json_object['sensor_id']
+        event.host.name = process_doc.hostname
+        event.host.cb_sensor_id = process_doc.sensor_id
+
+        # TODO: we probably shouldn't be looking up bes id's here. Leave that
+        # TODO: up to the bigfix later on in the processing chain.
         event.host.bigfix_id = int(self._bigfix_api.get_besid(
-            json_object['sensor_id']))
+            event.host.cb_sensor_id))
 
         # process information, or at least, whatever we can fill in
-        event.vuln_process.guid = json_object['process_id']
+        event.vuln_process.guid = process_id
         event.vuln_process.timestamp = json_object['timestamp']
-        event.vuln_process.cb_analyze_link = "{0}/{1}/1".format(
-                self._cb_url, event.vuln_process.guid)
+        event.vuln_process.cb_analyze_link = process_doc.webui_link
 
-        # watch for more than one document, wasn't a case this was built for
-        # since I'm not sure if it even exists?
-        if len(json_object['docs']) > 1:
-            self.logger.warning('More than one doc in feed report??')
+        # now we need to loop through the process document information
+        # and extract all interesting items from the alliance hits
+        # portion.
+        for feed_triggered in process_doc.alliance_hits:
+            feed_data = process_doc.alliance_hits[feed_triggered]
 
-        # store all the threat intel now
-        for doc in json_object["docs"]:
-            data_key = "alliance_data_{0}".format(feed_name)
-            intel_data_ids = doc[data_key]
+            feed_name = feed_data['feedinfo']['name'].lower()
+            if feed_name in self.vuln_feed_names:
+                for feed_hit in feed_data['hits']:
+                    hit_data = feed_data['hits'][feed_hit]
 
-            # if we get a string back, just stuff it into an array for
-            # processing. Not sure why it's possible to get different types
-            # back from the same data element.. but there you go.
-            if isinstance(intel_data_ids, str) or \
-                    isinstance(intel_data_ids, unicode):
-                intel_data_ids = [intel_data_ids]
+                    th = events.ThreatIntelHit()
+                    th.feed_name = feed_name
 
-            for report in intel_data_ids:
-                th = events.ThreatIntelHit()
-                th.feed_name = feed_name
+                    # the cb score is out of 100, instead of
+                    # out of 10 like CVSS.
+                    # Assumption: the CVSS score was just multiplied by 10
+                    th.score = float(hit_data['score']) / 10
 
-                select_string = "{0}:{1}".format(feed_id, report)
-                report = self._cb.select(ThreatReport, select_string)
+                    # assume some structure here.. we need the CVE tag
+                    # and I think the only way to do that is to extract it from
+                    # the id (and then chop of the 'CVE-' part of the string)
+                    # Expected title format:  CVE-<id> description
+                    # We only care about what is after the CVE- part.
+                    th.cve = hit_data['id']
+                    th.cve = th.cve[4:]  # remove 'CVE-' from the string
+                    self.logger.debug(
+                        'Vuln Hits: Built Intel Hit:{}'.format(th))
 
-                # the cb score is out of 100, instead of out of 10 like CVSS
-                # assumption: the CVSS score was just multiplied by 10
-                th.score = float(report.score) / 10
+                    # including the threat report link
+                    th.alliance_link = hit_data['link']
 
-                # assume some structure here.. we need the CVE tag
-                # and I think the only way to do that is to extract it from
-                # the title (UGH).
-                # Expected title format:  CVE<id> description
-                # We only care about what is before the first space.
-                th.cve = report.title.split(' ')[0]
-
-                # get rid of the 'CVE' part of the title,
-                # just want the id.
-                th.cve = th.cve[4:]
-                self.logger.debug('Vuln Hits: Built Intel Hit:{}'.format(th))
-
-                # intentionally skipping the alliance link variable
-                # it isn't reliable enough in this instance
-                # (one link for 'n' number of threat hits..)
-
-                event.threat_intel.hits.append(th)
+                    event.threat_intel.hits.append(th)
 
         self._core_event_chan.send(event)
 
     def _process_watchlist_hit(self, json_object):
         """
+        NOTE: This function processes IMPLICATION watchlists hits.
         When we notice a watchlist hit come over the wire, process the data
         and trace it back in CarbonBlack to see if it has a parent with NVD
         hits.  If not, discard the notice.  If so, send a ImplicatedAppEvent

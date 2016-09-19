@@ -14,6 +14,7 @@ from fletch_config import FletchCriticalError
 from ingress.cbforwarder.cb_event_handler import CbEventHandler
 from ingress.cbforwarder.cb_event_listener import CbEventListener
 from utils.loggy import Loggy
+from fletch_init import auto_create_vulnerability_watchlist
 
 
 class CbBigFixIntegrator(object):
@@ -28,7 +29,6 @@ class CbBigFixIntegrator(object):
         self._config = Config(config_file_path)
 
         # setup logging
-        # TODO respect the user configuration of log level
         self.loggy = Loggy(log_level=self._config.log_level,
                            log_file_location=log_file_path,
                            auto_config_flags=[Loggy.AC_STDOUT_DEBUG,
@@ -56,6 +56,11 @@ class CbBigFixIntegrator(object):
                 self.logger.critical(
                     "Can't find watchlist {0}, exiting.".format(watchlist))
                 sys.exit(1)
+
+        # ensure the watchlist we need exists, otherwise created it
+        auto_create_vulnerability_watchlist(
+            cb, self._config.vuln_watchlist_name,
+            self._config.vulnerable_app_feeds)
 
         # establish our services
         self._sb = Switchboard()

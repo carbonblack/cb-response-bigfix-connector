@@ -1,14 +1,15 @@
 from unittest import TestCase, main as unittest_main
 from time import sleep
-from src.utils.loggy import Loggy
+from utils.loggy import Loggy
 
-from src.egress.bigfix import EgressBigFix
-from src.data.switchboard import Switchboard
-from src.fletch_config import Config
-from test.test_config import mutate_to_test_config
-from src.data.events import VulnerableAppEvent, ThreatIntelHit
-from src.comms.bigfix_api import BigFixApi
+from egress.bigfix import EgressBigFix
+from data.switchboard import Switchboard
+from fletch_config import Config
+from test_config import mutate_to_test_config
+from data.events import VulnerableAppEvent, ThreatIntelHit
+from comms.bigfix_api import BigFixApi
 
+from test.test_config import test_config_file_path
 
 class TestEgressBigFix(TestCase):
 
@@ -41,7 +42,7 @@ class TestEgressBigFix(TestCase):
     def outbound_event_helper(self, starting_state):
         sb = Switchboard()
         test_config = mutate_to_test_config(
-            Config(),
+            Config(test_config_file_path),
             fake_bigfix_server_requests=5,
         )
         bigfix = BigFixApi(test_config, sb)

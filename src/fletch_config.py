@@ -131,6 +131,7 @@ class Config(object):
 
         # Default Param Values
         self.log_level = "DEBUG"
+        self.vuln_watchlist_name = 'BigFix Integration Vulnerability Watchlist'
 
         # load in the items from the config file
         # TODO clean this up to read values individually and specify defaults

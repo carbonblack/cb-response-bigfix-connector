@@ -3,15 +3,15 @@ from time import sleep
 import logging
 import json
 
-from src.data.switchboard import Switchboard
-from src.fletch_config import Config
-from src.ingress.cbforwarder.cb_event_handler import CbEventHandler
-from src.utils.loggy import Loggy
-from src.comms.bigfix_api import BigFixApi
-import src.data.events as events
+from data.switchboard import Switchboard
+from fletch_config import Config
+from ingress.cbforwarder.cb_event_handler import CbEventHandler
+from utils.loggy import Loggy
+from comms.bigfix_api import BigFixApi
+import data.events as events
 
 # from test.test_config import mutate_to_test_config
-
+from test.test_config import test_config_file_path
 
 class TestCbEventHandler(TestCase):
 
@@ -27,7 +27,7 @@ class TestCbEventHandler(TestCase):
     def test_add_get_channel(self):
         sb = Switchboard()
         self.addCleanup(self.cleanup_switchboard, sb)
-        test_config = Config()
+        test_config = Config(test_config_file_path)
 
         _bigfix = BigFixApi(test_config, sb)
         CbEventHandler(test_config, sb, _bigfix)
@@ -47,7 +47,7 @@ class TestCbEventHandler(TestCase):
         # WARN: many test failures come from this file.. usually because the
         # feed id number has changed. Update the JSON in the file to avoid
         # this.
-        test_nvd_hit = "test/ingress/data/adobe_reader_9_3_4_nvd_hit.json"
+        test_nvd_hit = "test/t_ingress/data/java_7u79_vuln_watchlist_hit.json"
         with open(test_nvd_hit) as json_file:
             hit_example = json.load(json_file)
             # print hit_example
@@ -58,18 +58,26 @@ class TestCbEventHandler(TestCase):
 
         # now verify the data was parsed correctly
         self.assertEqual(object_pass_back.host.name,
-                         hit_example["hostname"])
+                         "WIN7")
         self.assertEqual(object_pass_back.host.bigfix_id,
                          3634135)
-        self.assertEqual(object_pass_back.threat_intel.hits[0].cve,
-                         hit_example["report_id"][4:])
-        self.assertEqual(object_pass_back.threat_intel.hits[0].score,
-                         float(hit_example["report_score"])/10)
+
+        # manually copied list of CVEs from the server.
+        # we'll just check to be sure all made it into the threat event.
+        cve_list = [u'2015-4860', u'2015-4844', u'2015-4883', u'2015-4881',
+                    u'2016-3443', u'2016-0483', u'2016-3427', u'2016-0686',
+                    u'2016-0687', u'2016-0494']
+
+        threat_event_cve_list = \
+            [hit.cve for hit in object_pass_back.threat_intel.hits]
+        for cve_name in cve_list:
+            self.assertTrue(cve_name in threat_event_cve_list)
+
+        self.assertEqual(object_pass_back.threat_intel.hits[0].score, 10)
 
         # ugly way of grabbing just the first 5 chunks of id info
-        unique_id = '-'.join(
-            hit_example["docs"][0]["unique_id"].split('-')[0:5])
-        self.assertEqual(object_pass_back.vuln_process.guid, unique_id)
+        self.assertEqual(object_pass_back.vuln_process.guid,
+                         hit_example['process_id'])
 
     def test_watchlist_hit(self):
         """
@@ -81,9 +89,9 @@ class TestCbEventHandler(TestCase):
         """
         sb = Switchboard()
         self.addCleanup(self.cleanup_switchboard, sb)
-        test_config = Config()
+        test_config = Config(test_config_file_path)
 
-        cve_to_check_for = "CVE-2010-2883"
+        cve_to_check_for = "2010-2883"
 
         _bigfix = BigFixApi(test_config, sb)
         CbEventHandler(test_config, sb, _bigfix)
@@ -102,7 +110,7 @@ class TestCbEventHandler(TestCase):
 
         # WARN: many test failures come from this file.. likely means the
         # server has purged this particular process from its stored data
-        test_watchlist_hit = "test/ingress/data/adobearm_implication_" \
+        test_watchlist_hit = "test/t_ingress/data/adobearm_implication_" \
                              "watchlist_hit.json"
         with open(test_watchlist_hit) as json_file:
             hit_example = json.load(json_file)

@@ -1,0 +1,42 @@
+{
+   "cb_server":"cbserver",
+   "cb_version":"5.1.1.160623.1033",
+   "docs":[
+      {
+         "childproc_count":0,
+         "cmdline":"\"C:\\Program Files\\Java\\jre7_79\\bin\\java.exe\" ",
+         "crossproc_count":4,
+         "filemod_count":2,
+         "host_type":"workstation",
+         "last_update":"2016-09-16T03:02:02.196Z",
+         "modload_count":26,
+         "netconn_count":0,
+         "os_type":"windows",
+         "parent_guid":"0000000a-0000-105c-01d2-0e9818b49780",
+         "parent_id":-5927677812549714101,
+         "parent_name":"explorer.exe",
+         "parent_pid":4188,
+         "parent_segment_id":"1",
+         "parent_unique_id":"0000000a-0000-105c-01d2-0e9818b49780-00000001",
+         "path":"c:\\program files\\java\\jre7_79\\bin\\java.exe",
+         "process_guid":"0000000a-0000-12e8-01d2-0fc6b28afc80",
+         "process_md5":"332C581D5AAFC3AD4D4C4419EC9F22D4",
+         "process_name":"java.exe",
+         "process_pid":4840,
+         "regmod_count":0,
+         "segment_id":"1",
+         "start":"2016-09-16T03:02:02.056Z",
+         "unique_id":"0000000a-0000-12e8-01d2-0fc6b28afc80-00000001",
+         "username":"WIN7\\rad",
+         "watchlist_112":"2016-09-16T03:10:03.124265Z"
+      }
+   ],
+   "process_guid":"0000000a-0000-12e8-01d2-0fc6b28afc80",
+   "process_id":"0000000a-0000-12e8-01d2-0fc6b28afc80",
+   "segment_id":"1",
+   "server_name":"ip-192-168-0-11.us-west-2.compute.internal",
+   "timestamp":1473995431.134,
+   "type":"watchlist.storage.hit.process",
+   "watchlist_id":112,
+   "watchlist_name":"BigFix Vulnerable Apps Watchlist"
+}

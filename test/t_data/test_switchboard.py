@@ -1,5 +1,5 @@
 from unittest import TestCase, main as unittest_main
-from src.data.switchboard import Switchboard, Channel
+from data.switchboard import Switchboard, Channel
 from random import randint
 from time import sleep
 

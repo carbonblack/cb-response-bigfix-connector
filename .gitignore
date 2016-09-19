@@ -2,7 +2,7 @@
 *.pyc
 
 #pycharm
-.idea/
+.idea/workspace.xml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

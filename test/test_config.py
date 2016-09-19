@@ -2,7 +2,9 @@ import time
 from random import randrange
 from threading import Thread
 
-from test import tools as fake_bigfix_server
+from test.t_tools import fake_bigfix_server as fake_bigfix_server
+
+test_config_file_path = "/home/rad/files/doran-connector.config"
 
 
 def mutate_to_test_config(

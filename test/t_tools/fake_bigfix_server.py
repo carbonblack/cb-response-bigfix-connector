@@ -91,10 +91,10 @@ def request_tracker():
 
 
 app = Flask(__name__)
-app_data = FakeBigFixData()
 
 
 def init_fake_server(*args, **kwargs):
+    app_data = FakeBigFixData()
     app_data.empty_cache()
     app.run(*args, **kwargs)
 

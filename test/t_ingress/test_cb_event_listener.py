@@ -4,10 +4,12 @@ import json
 import socket
 import logging
 
-from src.data.switchboard import Switchboard
-from src.fletch_config import Config
-from src.ingress.cbforwarder.cb_event_listener import CbEventListener
-from src.utils.loggy import Loggy
+from data.switchboard import Switchboard
+from fletch_config import Config
+from ingress.cbforwarder.cb_event_listener import CbEventListener
+from utils.loggy import Loggy
+
+from test.test_config import test_config_file_path
 
 
 class TestCbEventListener(TestCase):
@@ -27,7 +29,7 @@ class TestCbEventListener(TestCase):
         """
 
         sb = Switchboard()
-        test_config = Config()
+        test_config = Config(test_config_file_path)
         self._logger.debug("Setup starting for EventListener")
         listener = CbEventListener(test_config, sb)
         self._logger.debug("Setup Complete")
@@ -45,7 +47,7 @@ class TestCbEventListener(TestCase):
             .register_callback(callback)
 
         # open up the JSON file and ship it over the network
-        test_nvd_hit = "test/ingress/data/adobe_reader_9_3_4_nvd_hit.json"
+        test_nvd_hit = "test/t_ingress/data/adobe_reader_9_3_4_nvd_hit.json"
         with open(test_nvd_hit) as json_file:
             original_json = json.load(json_file)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -83,7 +85,7 @@ class TestCbEventListener(TestCase):
 
         sb = Switchboard()
         self.addCleanup((lambda board: board.shutdown()), sb)
-        test_config = Config()
+        test_config = Config(test_config_file_path)
         self._logger.debug("Setup starting for EventListener")
         listener = CbEventListener(test_config, sb)
         self.addCleanup((lambda a_listener: a_listener.shutdown()), listener)
@@ -102,7 +104,7 @@ class TestCbEventListener(TestCase):
             .register_callback(callback)
 
         # open up the JSON file and ship it over the network
-        j_path = "test/ingress/" \
+        j_path = "test/t_ingress/" \
                  "data/reader_sl_feed_hit_with_nvd_vuln_parent.json"
         with open(j_path) as json_file:
             original_json = json.load(json_file)
