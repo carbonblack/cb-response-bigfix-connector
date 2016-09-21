@@ -25,9 +25,10 @@ class TestFletchInit(unittest.TestCase):
             token=self._config.cb_comms.api_token,
             ssl_verify=self._config.cb_comms.ssl_verify
         )
+        print(self._config.vuln_watchlist_name)
         auto_create_vulnerability_watchlist(
             cb,
-            "BigFix Integration Vulnerability Watchlist",
+            self._config.vuln_watchlist_name,
             self._config.vulnerable_app_feeds
         )
         # TODO develop checks here, right now this just run the code.

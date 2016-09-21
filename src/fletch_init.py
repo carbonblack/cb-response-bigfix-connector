@@ -98,6 +98,11 @@ def create_cb_watchlist(cb, watchlist_name, search_query_string,
     )
     w.query = search_query_string
 
+    # workaround for a weirdness in Cb Response and the API where
+    # '+' signs are used to indicate a space, which is perfectly normal,
+    # except the Cb Response server doesn't always like it. Using %20 instead.
+    w.search_query = w.search_query.replace('+', '%20')
+
     # since there isn't just a thing as overwrite, this
     # means, delete the original then plop a new one in it's place.
     if overwrite:
