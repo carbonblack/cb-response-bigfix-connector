@@ -64,6 +64,18 @@ class CbEventListener(object):
         self.listen_port = int(self.listen_port)
 
 
+class S3EventListener(object):
+    """
+    Configuration for polling an S3 bucket for Event Forwarder files
+    """
+    def __init__(self, config_file_path):
+        # name of channel to ship received JSON messages to
+        self.sb_incoming_cb_events = "sb_incoming_cb_events"
+
+        for x in load_file_section('s3-event-listener', config_file_path):
+            self.__dict__[x[0]] = x[1]
+
+
 class CbComms(object):
     """
     Configuration for the connection to the Cb Response server
@@ -172,5 +184,6 @@ class Config(object):
 
         # Load in the other option blocks
         self.cb_event_listener = CbEventListener(self._config_file)
+        self.s3_event_listener = S3EventListener(self._config_file)
         self.cb_comms = CbComms(self._config_file)
         self.ibm_bigfix = IbmBigfix(self._config_file)

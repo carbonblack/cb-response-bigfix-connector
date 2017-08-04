@@ -1,3 +1,4 @@
 cbapi==0.9.6
 requests==2.11.1
 PyInstaller==3.2
+boto3
