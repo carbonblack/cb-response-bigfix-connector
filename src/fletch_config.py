@@ -144,6 +144,7 @@ class Config(object):
         # Default Param Values
         self.log_level = "DEBUG"
         self.vuln_watchlist_name = 'BigFix Integration Vulnerability Watchlist'
+        self.event_source = "cb-event-forwarder"
 
         # load in the items from the config file
         # TODO clean this up to read values individually and specify defaults
@@ -183,7 +184,10 @@ class Config(object):
         )
 
         # Load in the other option blocks
-        # self.cb_event_listener = CbEventListener(self._config_file)
-        self.s3_event_listener = S3EventListener(self._config_file)
+        if self.event_source == "cb-event-forwarder":
+            self.cb_event_listener = CbEventListener(self._config_file)
+        elif self.event_source == "s3-event-listener":
+            self.s3_event_listener = S3EventListener(self._config_file)
+
         self.cb_comms = CbComms(self._config_file)
         self.ibm_bigfix = IbmBigfix(self._config_file)
