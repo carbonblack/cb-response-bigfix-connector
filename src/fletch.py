@@ -12,7 +12,8 @@ from egress.bigfix import EgressBigFix
 from fletch_config import Config
 from fletch_config import FletchCriticalError
 from ingress.cbforwarder.cb_event_handler import CbEventHandler
-from ingress.cbforwarder.cb_event_listener import CbEventListener
+#from ingress.cbforwarder.cb_event_listener import CbEventListener
+from ingress.cbforwarder.s3_event_listener import S3EventListener
 from utils.loggy import Loggy
 from fletch_init import auto_create_vulnerability_watchlist
 
@@ -65,7 +66,7 @@ class CbBigFixIntegrator(object):
         # establish our services
         self._sb = Switchboard()
         self._bigfix_api = BigFixApi(self._config, self._sb)
-        self._cb_listener = CbEventListener(self._config, self._sb)
+        self._cb_listener = S3EventListener(self._config, self._sb)
         self._cb_handler = CbEventHandler(self._config, self._sb,
                                           self._bigfix_api)
         self._bf_egress = EgressBigFix(self._config, self._sb,

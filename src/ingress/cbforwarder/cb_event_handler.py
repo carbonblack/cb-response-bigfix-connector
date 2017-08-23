@@ -57,7 +57,7 @@ class CbEventHandler(object):
 
         # register our callback
         self._switchboard.channel(
-            fletch_config.cb_event_listener.sb_incoming_cb_events
+            "sb_incoming_cb_events"
         ).register_callback(self.handle_incoming_event)
 
     def handle_incoming_event(self, json_object):

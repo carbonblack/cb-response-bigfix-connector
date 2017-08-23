@@ -183,7 +183,7 @@ class Config(object):
         )
 
         # Load in the other option blocks
-        self.cb_event_listener = CbEventListener(self._config_file)
+        # self.cb_event_listener = CbEventListener(self._config_file)
         self.s3_event_listener = S3EventListener(self._config_file)
         self.cb_comms = CbComms(self._config_file)
         self.ibm_bigfix = IbmBigfix(self._config_file)

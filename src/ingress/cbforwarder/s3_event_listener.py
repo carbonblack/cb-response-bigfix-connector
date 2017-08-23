@@ -20,6 +20,8 @@ from threading import Thread
 import boto3
 from json import loads as json_loads
 import time
+from datetime import datetime
+from dateutil.tz import tzutc
 
 
 class S3EventListener(object):
@@ -33,9 +35,10 @@ class S3EventListener(object):
         self._shutdown = False
         self.logger = logging.getLogger(__name__)
 
+        self._last_modified = datetime(2001, 1, 1, tzinfo=tzutc())
+
         # create our channels in the switchboard
-        self._incoming_chan = self._switchboard.channel(
-            fletch_config.cb_event_listener.sb_incoming_cb_events)
+        self._incoming_chan = self._switchboard.channel("sb_incoming_cb_events")
 
         #
         # Connect to S3
@@ -73,6 +76,9 @@ class S3EventListener(object):
                 self.logger.debug("Skipping unrelated object: {0}".format(
                     json_object["type"]))
 
+    def _save_progress(self):
+        print("[*] last modified time is now {}".format(self._last_modified))
+
     def _s3_poll_loop(self):
         """
         Main loop to poll the S3 bucket for incoming events.
@@ -81,24 +87,20 @@ class S3EventListener(object):
         Start this function as a target of a thread.
         """
         processed_list = set()
+        max_last_modified_time = self._last_modified
 
         while not self._shutdown:
             for obj in self._bucket.objects.all():
-                key = obj.key
+                if obj.last_modified > self._last_modified:
+                    if obj.last_modified > max_last_modified_time:
+                        max_last_modified_time = obj.last_modified
 
-                #
-                # Check to see if we have already processed this file
-                #
-                if key not in processed_list:
-                    print("[+]: Processing file: {}".format(key))
-                    #
-                    # We have not processed this file.
-                    #
-                    body = obj.get()['Body'].read()
+                    print("[+] Processing file: {}".format(obj.key))
+                    body = obj.get()["Body"].read()
+                    #self._process_events(body)
 
-                    self._process_events(body)
-                    processed_list.add(key)
-                    #save_progress(processed_list)
+            self._last_modified = max_last_modified_time
+            self._save_progress()
 
             # sleep for 1 minute
             time.sleep(60)
