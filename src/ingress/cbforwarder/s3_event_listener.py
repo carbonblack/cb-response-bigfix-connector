@@ -66,12 +66,16 @@ class S3EventListener(object):
 
             # assume keys are present, fetch what we need
             # (errors will be caught anyhow by the try-except wrapper)
-            if json_object["type"] in accepted_message_types:
+            object_type = json_object.get("type")
+
+            if object_type in accepted_message_types:
                 self.logger.debug("Received message of type: {0}".format(
                     json_object['type']
                 ))
                 self._incoming_chan.send(json_object)
 
+            elif not object_type:
+                self.logger.debug("Skipping unrelated object without 'type' field")
             else:
                 self.logger.debug("Skipping unrelated object: {0}".format(
                     json_object["type"]))
@@ -97,7 +101,7 @@ class S3EventListener(object):
 
                     print("[+] Processing file: {}".format(obj.key))
                     body = obj.get()["Body"].read()
-                    #self._process_events(body)
+                    self._process_events(body)
 
             self._last_modified = max_last_modified_time
             self._save_progress()
