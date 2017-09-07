@@ -22,12 +22,18 @@ from json import loads as json_loads
 import time
 from datetime import datetime
 from dateutil.tz import tzutc
+from dateutil import parser
+
+
+S3_STATE_FILE = "/var/run/cb/integrations/cb-response-bigfix-connector/s3-last-modified"
 
 
 class S3EventListener(object):
     def __init__(self, fletch_config, switchboard):
         """
-        Establishes a boto s3 interface for
+        Establishes an interface to pull events from the Cb Response Event Forwarder via S3.
+        Does not remove the files on the S3 bucket; instead we track the most recent last modified
+        date that we've processed, and use that as a trigger
         """
         self._s3_bucket_name = fletch_config.s3_event_listener.bucket_name
         self._s3_profile_name = fletch_config.s3_event_listener.profile_name
@@ -80,8 +86,12 @@ class S3EventListener(object):
                 self.logger.debug("Skipping unrelated object: {0}".format(
                     json_object["type"]))
 
+    def _read_progress(self):
+        self._last_modified = parser.parse(open(S3_STATE_FILE, "r").readline())
+
     def _save_progress(self):
-        print("[*] last modified time is now {}".format(self._last_modified))
+        self.logger.debug("Last modified time is now {}".format(self._last_modified))
+        open(S3_STATE_FILE, "w").write(self._last_modified.isoformat())
 
     def _s3_poll_loop(self):
         """
@@ -99,7 +109,7 @@ class S3EventListener(object):
                     if obj.last_modified > max_last_modified_time:
                         max_last_modified_time = obj.last_modified
 
-                    print("[+] Processing file: {}".format(obj.key))
+                    self.logger.debug("Processing file: {}".format(obj.key))
                     body = obj.get()["Body"].read()
                     self._process_events(body)
 

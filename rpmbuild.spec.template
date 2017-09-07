@@ -45,3 +45,4 @@ stop cb-response-bigfix-connector || :
 
 %files -f INSTALLED_FILES
 %defattr(-,root,root)
+%dir /var/run/cb/integrations/cb-response-bigfix-connector
