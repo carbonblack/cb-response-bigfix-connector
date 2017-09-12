@@ -25,11 +25,23 @@ new_feed = cbfeeds.CbFeed(feedinfo=feed_info, reports=[feed_report])
 open("feed.json", "w").write(new_feed.dump())
 
 print("Make sure that the feed 'feed.json' is copied to the Cb Response server.")
-input("Press enter when the feed is copied: ")
+raw_input("Press enter when the feed is copied to /tmp/feed.json: ")
+
+c = CbResponseAPI(profile="bigfix-cbr6.qalab.local")
+
+if len(c.select(Feed).where("name:bigfixTestVulnerableSoftware")) == 0:
+    new_feed = c.create(Feed)
+    new_feed.feed_url = "file://tmp/feed.json"
+    new_feed.enabled = True
+    new_feed.save()
+else:
+    # otherwise make sure that the feed is enabled.
+    feed = c.select(Feed).where("name:bigfixTestVulnerableSoftware").one()
+    feed.enabled = True
+    feed.save()
 
 # Create a new watchlist with a query of "process_name:ping.exe"
 # - this will be our "implicated event" watchlist, which will be triggered by our "vulnerable binary" above
-c = CbResponseAPI()
 if len(c.select(Watchlist).where("name:VulnBin")) == 0:
     new_watchlist = c.create(Watchlist, data={"name": "VulnBin",
                                               "index_type": "events",
@@ -45,7 +57,7 @@ hostname = "WIN10BIGFIX60"
 sensor = c.select(Sensor).where("hostname:{}".format(hostname)).one()
 while sensor.status.lower() != "online":
     print("Make sure that host {} is online before proceeding.".format(hostname))
-    input("Press enter when the host {} is online: ".format(hostname))
+    raw_input("Press enter when the host {} is online: ".format(hostname))
     sensor = c.select(Sensor).where("hostname:{}".format(hostname)).one()
 
 with sensor.lr_session() as session:
