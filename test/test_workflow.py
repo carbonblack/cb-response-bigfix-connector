@@ -4,6 +4,11 @@ import cbfeeds
 import time
 import os
 import hashlib
+import logging
+
+
+logging.basicConfig()
+logging.getLogger("cbapi").setLevel(logging.DEBUG)
 
 
 # ---- SETUP ----
@@ -61,21 +66,25 @@ while sensor.status.lower() != "online":
     sensor = c.select(Sensor).where("hostname:{}".format(hostname)).one()
 
 with sensor.lr_session() as session:
+    print("Deleting existing vulnerable_binary.exe, if it exists")
     try:
         session.delete_file(r"c:\vulnerable_binary.exe")
     except LiveResponseError as e:
         if e.decoded_win32_error == "ERROR_FILE_NOT_FOUND":
             pass
 
+    print("Putting vulnerable_binary.exe to remote host")
     session.put_file(open("vulnerable_binary.exe", "rb"), r"c:\vulnerable_binary.exe")
 
     # - Run the "vulnerable binary" without any arguments
+    print("Running vulnerable_binary.exe with no arguments")
     session.create_process(r"c:\vulnerable_binary.exe")
 
 # Test 2: Run the "vulnerable" binary and make sure that it triggers the "implicated" feature
 # - Copy the "vulnerable binary" via Live Response to a sensor connected to the Cb Response server
 # - Run the "vulnerable binary" with one command line argument (anything)
 # - (?) Validate that we get a hit in the BigFix connector
+    print("Running vulnerable_binary.exe with do_implicated argument")
     session.create_process(r"c:\vulnerable_binary.exe do_implicated")
 
 print("Test complete. Validate that there are two hits in the BigFix console")
