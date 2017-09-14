@@ -11,7 +11,7 @@ a = Analysis(['src/fletch.py'],
                ('src/statics', 'src/statics')
              ],
              pathex=['src'],
-             hiddenimports=['unicodedata', 'xml.etree', 'xml.etree.ElementTree'],
+             hiddenimports=['unicodedata', 'xml.etree', 'xml.etree.ElementTree', "HTMLParser"],
              hookspath=None,
              runtime_hooks=None)
 print(a.datas)
