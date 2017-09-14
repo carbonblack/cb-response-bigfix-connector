@@ -7,6 +7,7 @@ a = Analysis(['src/fletch.py'],
              datas=[
                (os.path.join(cbapi_base_dir, 'response', 'models'), 'cbapi/response/models'),
                (os.path.join(cbapi_base_dir, 'protection', 'models'), 'cbapi/protection/models'),
+               (os.path.join(cbapi_base_dir, 'defense', 'models'), 'cbapi/defense/models'),
                ('src/statics', 'src/statics')
              ],
              pathex=['src'],
