@@ -1,4 +1,4 @@
 cbapi
 requests
-PyInstaller==3.2
+PyInstaller==3.6
 boto3
